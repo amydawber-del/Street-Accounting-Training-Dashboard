@@ -732,6 +732,71 @@ td {
 }
 .dab-ghost:hover { background: var(--bg); color: var(--text); }
 
+/* ===== ACCESS CODE POPUP ===== */
+#access-code-popup-overlay {
+  position: fixed; inset: 0;
+  background: rgba(18,21,42,0.55);
+  z-index: 2000; display: none; opacity: 0;
+  transition: opacity 0.2s; backdrop-filter: blur(4px);
+  align-items: center; justify-content: center;
+}
+#access-code-popup-overlay.open { display: flex; opacity: 1; }
+.acp-modal {
+  background: var(--white); border-radius: 20px;
+  width: 480px; max-width: 95vw;
+  box-shadow: var(--shadow-lg); overflow: hidden;
+  animation: fadeUp 0.25s ease both;
+}
+.acp-header { background: var(--navy); padding: 24px 28px 20px; }
+.acp-header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.acp-title { font-size: 18px; font-weight: 800; color: white; letter-spacing: -0.3px; }
+.acp-close {
+  width: 30px; height: 30px; border-radius: 8px;
+  background: rgba(255,255,255,0.1); border: none; cursor: pointer;
+  color: rgba(255,255,255,0.6); font-size: 16px;
+  display: flex; align-items: center; justify-content: center; transition: var(--transition);
+}
+.acp-close:hover { background: rgba(255,255,255,0.2); color: white; }
+.acp-learner-info { font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+.acp-learner-name { color: rgba(255,255,255,0.9); font-weight: 600; }
+.acp-body { padding: 28px; }
+.acp-code-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--text-muted); text-align: center; margin-bottom: 14px;
+}
+.acp-code-boxes { display: flex; gap: 10px; justify-content: center; margin-bottom: 8px; }
+.acp-code-digit {
+  width: 64px; height: 72px; background: var(--navy); border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 34px; font-weight: 800; color: white;
+  font-family: 'DM Mono', monospace;
+  box-shadow: 0 4px 16px rgba(18,21,42,0.18); transition: var(--transition);
+}
+.acp-code-loading { opacity: 0.3; font-size: 28px; }
+.acp-code-hint { text-align: center; font-size: 12px; color: var(--text-muted); margin-bottom: 24px; }
+.acp-divider { height: 1px; background: var(--border-light); margin-bottom: 20px; }
+.acp-message-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--text-muted); margin-bottom: 10px;
+}
+.acp-message-preview {
+  background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  padding: 12px 14px; font-size: 12px; color: var(--text); line-height: 1.6;
+  margin-bottom: 14px; max-height: 120px; overflow-y: auto; white-space: pre-wrap;
+}
+.acp-actions { display: flex; gap: 8px; }
+.acp-btn {
+  flex: 1; padding: 11px 14px; border-radius: var(--radius-sm);
+  font-family: inherit; font-size: 13px; font-weight: 600;
+  cursor: pointer; border: none; transition: var(--transition);
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.acp-btn-primary { background: var(--purple); color: white; }
+.acp-btn-primary:hover { background: var(--purple-light); box-shadow: 0 4px 16px rgba(91,75,231,0.35); }
+.acp-btn-ghost { background: var(--bg); color: var(--text-muted); border: 1.5px solid var(--border); }
+.acp-btn-ghost:hover { background: white; color: var(--text); }
+.acp-btn-copy-confirm { background: var(--success-bg); color: var(--success); border-color: transparent; }
+
 /* ===== UTILS ===== */
 .hidden { display: none !important; }
 @keyframes fadeUp {
@@ -939,7 +1004,6 @@ td {
   border: 1px solid rgba(91,75,231,0.25);
   vertical-align: middle;
 }
-/* ── Body-level tooltip — escapes any overflow:hidden parent ── */
 #conf-tooltip-global {
   position: fixed;
   background: var(--navy);
@@ -951,8 +1015,7 @@ td {
   font-weight: 400; text-transform: none; letter-spacing: 0;
   box-shadow: var(--shadow-lg);
   pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.18s;
+  opacity: 0; transition: opacity 0.18s;
   z-index: 9999;
   white-space: normal;
   border: 1px solid rgba(255,255,255,0.07);
@@ -1396,49 +1459,78 @@ async function connectLive() {
 
 function processLiveData(data) {
   APP.learners = (data.learners || []).map(row => {
-    // Derive confidence: prefer direct value from Learner Summary, fall back to last event
+
+    // Col A  User ID
+    const rawId        = row['userId']        || row['learnerId']       || row['id']            || '';
+    // Col B  Learner Name
+    const rawName      = row['learnerName']   || row['name']            || '';
+    // Col C  Email
+    const rawEmail     = row['email']         || '';
+    // Col D  Company / Agency → camelCase: companyAgency
+    const rawCompany   = row['companyAgency'] || row['company']         || '';
+    // Col E  First Seen
+    const rawFirstSeen = row['firstSeen']     || row['timestamp']       || '';
+    // Col F  Last Active
+    const rawLastActive= row['lastActive']    || '';
+    // Col G  Overall Progress % → camelCase: overallProgress
+    const rawProgress  = row['overallProgress'] != null ? row['overallProgress']
+                       : row['progress']      != null ? row['progress'] : null;
+    // Col H  Modules Completed
+    const rawModsDone  = row['modulesCompleted'] != null ? row['modulesCompleted'] : null;
+    // Col I  Modules Total
+    const rawModsTotal = row['modulesTotal']  != null ? row['modulesTotal'] : null;
+    // Col J  Confidence Score → camelCase: confidenceScore
+    const rawConf      = row['confidenceScore'] != null ? row['confidenceScore']
+                       : row['confidence']    != null ? row['confidence'] : null;
+    // Col L  Learner Access → camelCase: learnerAccess  (was "approved")
+    const rawAccess    = row['learnerAccess'] != null ? row['learnerAccess']
+                       : row['approved']      != null ? row['approved']   : '';
+    // Col M  access code → camelCase: accessCode
+    const rawCode      = row['accessCode']    || row['access_code']     || '';
+
+    // Confidence: sheet value > last event fallback
     const confFromEvents = data.events ? (() => {
-      const evs = (data.events||[]).filter(e => e.email === row.email && e.confidenceScore && e.confidenceScore !== '');
+      const evs = (data.events||[]).filter(e => e.email === rawEmail && e.confidenceScore && e.confidenceScore !== '');
       return evs.length ? parseFloat(evs[evs.length-1].confidenceScore) : null;
     })() : null;
-    const confidence = (row.confidence !== null && row.confidence !== undefined && row.confidence !== '')
-      ? Number(row.confidence) : confFromEvents;
+    const confidence = (rawConf !== null && rawConf !== undefined && rawConf !== '')
+      ? Number(rawConf) : confFromEvents;
 
-    // Derive progress: prefer direct value from Learner Summary, fall back to last event
+    // Progress: sheet value > last event fallback
     const progFromEvents = data.events ? (() => {
-      const evs = (data.events||[]).filter(e => e.email === row.email && e.overallProgressPct !== undefined && e.overallProgressPct !== '');
+      const evs = (data.events||[]).filter(e => e.email === rawEmail && e.overallProgressPct !== undefined && e.overallProgressPct !== '');
       return evs.length ? parseFloat(evs[evs.length-1].overallProgressPct) : 0;
     })() : 0;
-    const progress = (row.progress !== null && row.progress !== undefined) ? Number(row.progress) : progFromEvents;
+    const progress = (rawProgress !== null && rawProgress !== undefined && rawProgress !== '')
+      ? Number(rawProgress) : progFromEvents;
 
-    // Derive modulesCompleted: prefer direct value from Learner Summary, fall back to last event
+    // Modules completed: sheet value > last event fallback
     const modsFromEvents = data.events ? (() => {
-      const evs = (data.events||[]).filter(e => e.email === row.email && e.modulesCompleted !== undefined && e.modulesCompleted !== '');
+      const evs = (data.events||[]).filter(e => e.email === rawEmail && e.modulesCompleted !== undefined && e.modulesCompleted !== '');
       return evs.length ? parseInt(evs[evs.length-1].modulesCompleted) : 0;
     })() : 0;
-    const modulesCompleted = (row.modulesCompleted !== null && row.modulesCompleted !== undefined) ? Number(row.modulesCompleted) : modsFromEvents;
+    const modulesCompleted = (rawModsDone !== null && rawModsDone !== undefined && rawModsDone !== '')
+      ? Number(rawModsDone) : modsFromEvents;
+
+    const isApproved = rawAccess === true || String(rawAccess).toUpperCase() === 'TRUE';
 
     return {
-      id: row.learnerId || row.id,
-      name: row.name,
-      email: row.email,
-      company: row.company,
-      firstSeen: row.firstSeen || row.timestamp || '',   // FIX: was row.timestamp only
-      lastActive: row.lastActive,
-      progress: progress || 0,
-      modulesCompleted: modulesCompleted || 0,
-      modulesTotal: Number(row.modulesTotal) || 5,        // FIX: was hardcoded 5
-      confidence: confidence,
-      accessStatus: (() => {
-        const v = row.approved;
-        if (v === true || String(v).toUpperCase() === 'TRUE') return 'Given';
-        return 'Pending';
-      })(),
-      approved: row.approved === true || String(row.approved).toUpperCase() === 'TRUE',
+      id:               rawId,
+      name:             rawName,
+      email:            rawEmail,
+      company:          rawCompany,
+      firstSeen:        rawFirstSeen,
+      lastActive:       rawLastActive,
+      progress:         isNaN(progress) ? 0 : (progress || 0),
+      modulesCompleted: isNaN(modulesCompleted) ? 0 : (modulesCompleted || 0),
+      modulesTotal:     Number(rawModsTotal) || 5,
+      confidence:       (confidence !== null && !isNaN(confidence)) ? confidence : null,
+      accessStatus:     isApproved ? 'Given' : 'Pending',
+      approved:         isApproved,
+      accessCode:       rawCode,
     };
   });
   APP.events = data.events || [];
-  // Store module-level progress from Module Progress sheet (if Apps Script returns it)
   APP.moduleProgress = data.moduleProgress || [];
 }
 
@@ -2182,40 +2274,112 @@ function showToast(msg) {
 
 // ===== UPDATE ACCESS (calls Apps Script) =====
 async function updateAccess(learnerId, email, grant) {
-  // Optimistically update local state
   const l = APP.learners.find(x => x.id === learnerId);
-  if (l) {
-    l.approved = grant;
-    l.accessStatus = grant ? 'Given' : 'Declined';
-  }
-
-  // Re-render so buttons update instantly
+  if (l) { l.approved = grant; l.accessStatus = grant ? 'Given' : 'Declined'; }
   applyFilters(); renderAll();
-  // Re-open drawer with updated data
-  if (document.getElementById('side-drawer').classList.contains('open')) {
-    openDrawer(learnerId);
-  }
-
+  if (document.getElementById('side-drawer').classList.contains('open')) openDrawer(learnerId);
   showToast(grant ? `✓ Access granted to ${l?.name || email}` : `✕ Access declined for ${l?.name || email}`);
-
-  // If demo mode, just stop here
   if (APP.isDemo) { showToast('Demo mode — changes not saved to sheet'); return; }
 
-  try {
-    await fetch(SHEETS_URL, {
-      method: 'POST',
-      // 'text/plain' is a CORS "simple" content-type — avoids the OPTIONS preflight
-      // that 'application/json' triggers. GAS still receives the JSON body fine.
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({
-        action: 'updateAccess',
-        email: email,
-        approved: grant
-      })
-    });
-  } catch(e) {
-    showToast('⚠️ Could not sync to sheet — try refreshing');
+  // POST the access change (fire and forget — GAS redirects make response unreliable)
+  fetch(SHEETS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ action: 'updateAccess', email: email, approved: grant })
+  }).catch(() => showToast('⚠️ Could not sync to sheet — try refreshing'));
+
+  // If granting: immediately show popup in loading state, then fetch the code via JSONP
+  if (grant && l) {
+    showAccessCodePopup(l, true);
+    try {
+      const result = await jsonpFetch(SHEETS_URL, { action: 'getAccessCode', email: email }, 12000);
+      if (result.accessCode) {
+        l.accessCode = result.accessCode;
+        showAccessCodePopup(l, false);
+      }
+    } catch(e) {
+      console.warn('Could not fetch access code:', e);
+    }
   }
+}
+
+// ===== ACCESS CODE POPUP =====
+let _acpData = {};
+
+function showAccessCodePopup(l, loading) {
+  const code = l.accessCode || '';
+  _acpData = { learner: l, code };
+  document.getElementById('acp-learner-name').textContent = l.name;
+  document.getElementById('acp-learner-email').textContent = l.email;
+  if (loading) {
+    document.getElementById('acp-code-boxes').innerHTML =
+      ['','','',''].map(() => `<div class="acp-code-digit acp-code-loading">·</div>`).join('');
+    document.getElementById('acp-message-preview').textContent = 'Fetching access code…';
+  } else {
+    const digits = code ? code.toString().padStart(4,'0').split('') : ['?','?','?','?'];
+    document.getElementById('acp-code-boxes').innerHTML = digits.map(d =>
+      `<div class="acp-code-digit">${d}</div>`).join('');
+    document.getElementById('acp-message-preview').textContent = buildAccessMessage(l.name, l.email, code);
+    const btn = document.getElementById('acp-copy-btn');
+    btn.textContent = '📋 Copy Message'; btn.className = 'acp-btn acp-btn-ghost';
+  }
+  document.getElementById('access-code-popup-overlay').classList.add('open');
+}
+
+function buildAccessMessage(name, email, code) {
+  const firstName = name.split(' ')[0];
+  return `Hi ${firstName},
+
+Great news — you've been granted access to the Street Simulator! 🎉
+
+Your login details:
+  Email: ${email}
+  Access Code: ${code || '????'}
+
+To get started, visit the simulator and enter your email address followed by your 4-digit code when prompted. Keep this code safe — you'll need it every time you log in.
+
+If you have any issues accessing the simulator, please don't hesitate to get in touch.
+
+Best wishes`;
+}
+
+function acpCopyMessage() {
+  const msg = buildAccessMessage(_acpData.learner?.name, _acpData.learner?.email, _acpData.code);
+  navigator.clipboard.writeText(msg).then(() => {
+    const btn = document.getElementById('acp-copy-btn');
+    btn.textContent = '✓ Copied!'; btn.className = 'acp-btn acp-btn-copy-confirm';
+    setTimeout(() => { btn.textContent = '📋 Copy Message'; btn.className = 'acp-btn acp-btn-ghost'; }, 2500);
+  }).catch(() => showToast('⚠️ Could not copy — please copy manually'));
+}
+
+function acpOpenEmail() {
+  const l = _acpData.learner, code = _acpData.code;
+  const subject = encodeURIComponent('Your Street Simulator Access');
+  const body = encodeURIComponent(buildAccessMessage(l?.name, l?.email, code));
+  window.open(`mailto:${l?.email || ''}?subject=${subject}&body=${body}`, '_blank');
+}
+
+function closeAccessCodePopup(e) {
+  if (e && e.target !== document.getElementById('access-code-popup-overlay')) return;
+  document.getElementById('access-code-popup-overlay').classList.remove('open');
+}
+
+// ===== CONFIDENCE TOOLTIP =====
+function showConfTooltip(e) {
+  const tip  = document.getElementById('conf-tooltip-global');
+  const rect = e.currentTarget.getBoundingClientRect();
+  const tipW = 268;
+  let left = rect.left + rect.width / 2 - tipW / 2;
+  left = Math.max(8, Math.min(left, window.innerWidth - tipW - 8));
+  tip.style.left      = left + 'px';
+  tip.style.top       = rect.top + 'px';
+  tip.style.transform = 'translateY(calc(-100% - 8px))';
+  tip.style.setProperty('--arrow-left', (rect.left + rect.width / 2 - left) + 'px');
+  tip.classList.add('visible');
+  e.stopPropagation();
+}
+function hideConfTooltip() {
+  document.getElementById('conf-tooltip-global').classList.remove('visible');
 }
 
 // ===== KPI MODAL =====
@@ -2291,10 +2455,8 @@ function closeKPIModal(e) {
 }
 
 function updateAccessModal(learnerId, email, grant, rowEl) {
-  // Disable buttons immediately to prevent double-click
   rowEl.querySelectorAll('.access-btn').forEach(b => b.disabled = true);
-  updateAccess(learnerId, email, grant);
-  // Update the row UI inline
+  updateAccess(learnerId, email, grant); // popup fires inside updateAccess on grant
   const actionsDiv = rowEl.querySelector('.modal-learner-actions');
   if (actionsDiv) {
     actionsDiv.innerHTML = grant
@@ -2438,6 +2600,33 @@ window.addEventListener('DOMContentLoaded', () => {
   connectLive();
 });
 </script>
+<!-- ===== ACCESS CODE POPUP ===== -->
+<div id="access-code-popup-overlay" onclick="closeAccessCodePopup(event)">
+  <div class="acp-modal">
+    <div class="acp-header">
+      <div class="acp-header-top">
+        <div class="acp-title">🎉 Access Granted</div>
+        <button class="acp-close" onclick="closeAccessCodePopup()">✕</button>
+      </div>
+      <div class="acp-learner-info">
+        <span class="acp-learner-name" id="acp-learner-name"></span>&nbsp;·&nbsp;<span id="acp-learner-email"></span>
+      </div>
+    </div>
+    <div class="acp-body">
+      <div class="acp-code-label">Their 4-Digit Access Code</div>
+      <div class="acp-code-boxes" id="acp-code-boxes"></div>
+      <div class="acp-code-hint">Share this with the learner — they'll need it every time they log in</div>
+      <div class="acp-divider"></div>
+      <div class="acp-message-label">📨 Ready-to-Send Message</div>
+      <div class="acp-message-preview" id="acp-message-preview"></div>
+      <div class="acp-actions">
+        <button class="acp-btn acp-btn-ghost" id="acp-copy-btn" onclick="acpCopyMessage()">📋 Copy Message</button>
+        <button class="acp-btn acp-btn-primary" onclick="acpOpenEmail()">✉️ Open in Mail</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== GLOBAL CONFIDENCE TOOLTIP ===== -->
 <div id="conf-tooltip-global">
   <div class="conf-tooltip-title">What is the Confidence Score?</div>
@@ -2447,29 +2636,6 @@ window.addEventListener('DOMContentLoaded', () => {
   <div class="conf-tooltip-row"><div class="conf-tooltip-dot" style="background:#17B978"></div><span>7–10 · Strong — ready to apply skills</span></div>
   <div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.1);font-size:10px;color:rgba(255,255,255,0.4)">A high progress % with a low confidence score flags a "confidence gap" — the learner has completed the modules but still feels uncertain.</div>
 </div>
-
-<script>
-function showConfTooltip(e) {
-  const tip  = document.getElementById('conf-tooltip-global');
-  const rect = e.currentTarget.getBoundingClientRect();
-  // Position: centred above the pill, clamped so it never goes off-screen
-  const tipW = 268;
-  let left = rect.left + rect.width / 2 - tipW / 2;
-  left = Math.max(8, Math.min(left, window.innerWidth - tipW - 8));
-  const top = rect.top - 8; // sits just above; CSS translateY(-100%) handles the rest
-  tip.style.left = left + 'px';
-  tip.style.top  = top + 'px';
-  tip.style.transform = 'translateY(-100%)';
-  // Reposition the arrow to match actual centre of pill
-  const arrowLeft = (rect.left + rect.width / 2) - left;
-  tip.style.setProperty('--arrow-left', arrowLeft + 'px');
-  tip.classList.add('visible');
-  e.stopPropagation(); // don't trigger column sort
-}
-function hideConfTooltip() {
-  document.getElementById('conf-tooltip-global').classList.remove('visible');
-}
-</script>
 
 </body>
 </html>
