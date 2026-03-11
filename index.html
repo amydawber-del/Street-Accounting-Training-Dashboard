@@ -732,6 +732,102 @@ td {
 }
 .dab-ghost:hover { background: var(--bg); color: var(--text); }
 
+/* ===== ACCESS CODE POPUP ===== */
+#access-code-popup-overlay {
+  position: fixed; inset: 0;
+  background: rgba(18,21,42,0.55);
+  z-index: 2000;
+  display: none; opacity: 0;
+  transition: opacity 0.2s;
+  backdrop-filter: blur(4px);
+  align-items: center; justify-content: center;
+}
+#access-code-popup-overlay.open { display: flex; opacity: 1; }
+.acp-modal {
+  background: var(--white);
+  border-radius: 20px;
+  width: 480px; max-width: 95vw;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: fadeUp 0.25s ease both;
+}
+.acp-header {
+  background: var(--navy);
+  padding: 24px 28px 20px;
+  position: relative;
+}
+.acp-header-top {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 4px;
+}
+.acp-title {
+  font-size: 18px; font-weight: 800; color: white; letter-spacing: -0.3px;
+}
+.acp-close {
+  width: 30px; height: 30px; border-radius: 8px;
+  background: rgba(255,255,255,0.1); border: none;
+  cursor: pointer; color: rgba(255,255,255,0.6); font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  transition: var(--transition);
+}
+.acp-close:hover { background: rgba(255,255,255,0.2); color: white; }
+.acp-learner-info { font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+.acp-learner-name { color: rgba(255,255,255,0.9); font-weight: 600; }
+.acp-body { padding: 28px; }
+.acp-code-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--text-muted); text-align: center;
+  margin-bottom: 14px;
+}
+.acp-code-boxes {
+  display: flex; gap: 10px; justify-content: center;
+  margin-bottom: 8px;
+}
+.acp-code-digit {
+  width: 64px; height: 72px;
+  background: var(--navy);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 34px; font-weight: 800; color: white;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: -1px;
+  box-shadow: 0 4px 16px rgba(18,21,42,0.18);
+}
+.acp-code-hint {
+  text-align: center; font-size: 12px; color: var(--text-muted);
+  margin-bottom: 24px;
+}
+.acp-divider { height: 1px; background: var(--border-light); margin-bottom: 20px; }
+.acp-message-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--text-muted); margin-bottom: 10px;
+}
+.acp-message-preview {
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 12px; color: var(--text);
+  line-height: 1.6; margin-bottom: 14px;
+  max-height: 120px; overflow-y: auto;
+}
+.acp-actions { display: flex; gap: 8px; }
+.acp-btn {
+  flex: 1; padding: 11px 14px;
+  border-radius: var(--radius-sm);
+  font-family: inherit; font-size: 13px; font-weight: 600;
+  cursor: pointer; border: none; transition: var(--transition);
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.acp-btn-primary { background: var(--purple); color: white; }
+.acp-btn-primary:hover { background: var(--purple-light); box-shadow: 0 4px 16px rgba(91,75,231,0.35); }
+.acp-btn-ghost {
+  background: var(--bg); color: var(--text-muted);
+  border: 1.5px solid var(--border);
+}
+.acp-btn-ghost:hover { background: white; color: var(--text); }
+.acp-btn-copy-confirm { background: var(--success-bg); color: var(--success); border-color: transparent; }
+
 /* ===== UTILS ===== */
 .hidden { display: none !important; }
 @keyframes fadeUp {
@@ -1433,6 +1529,7 @@ function processLiveData(data) {
         return 'Pending';
       })(),
       approved: row.approved === true || String(row.approved).toUpperCase() === 'TRUE',
+      accessCode: row.accessCode || row.access_code || '',
     };
   });
   APP.events = data.events || [];
@@ -2200,10 +2297,8 @@ async function updateAccess(learnerId, email, grant) {
   if (APP.isDemo) { showToast('Demo mode — changes not saved to sheet'); return; }
 
   try {
-    await fetch(SHEETS_URL, {
+    const res = await fetch(SHEETS_URL, {
       method: 'POST',
-      // 'text/plain' is a CORS "simple" content-type — avoids the OPTIONS preflight
-      // that 'application/json' triggers. GAS still receives the JSON body fine.
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({
         action: 'updateAccess',
@@ -2211,9 +2306,90 @@ async function updateAccess(learnerId, email, grant) {
         approved: grant
       })
     });
+    // If granting access, show the code popup after server confirms
+    if (grant && l) {
+      try {
+        const data = await res.json();
+        if (data.accessCode) l.accessCode = data.accessCode;
+      } catch(e) { /* response may not be JSON — that's fine, use stored code */ }
+      showAccessCodePopup(l);
+    }
   } catch(e) {
     showToast('⚠️ Could not sync to sheet — try refreshing');
+    // Still show popup with whatever code we have locally
+    if (grant && l) showAccessCodePopup(l);
   }
+}
+
+// ===== ACCESS CODE POPUP =====
+let _acpData = {};
+
+function showAccessCodePopup(l) {
+  const code = l.accessCode || '';
+  _acpData = { learner: l, code };
+
+  document.getElementById('acp-learner-name').textContent = l.name;
+  document.getElementById('acp-learner-email').textContent = l.email;
+
+  // Render digit boxes
+  const digits = code ? code.toString().padStart(4, '0').split('') : ['?','?','?','?'];
+  document.getElementById('acp-code-boxes').innerHTML = digits.map(d =>
+    `<div class="acp-code-digit">${d}</div>`
+  ).join('');
+
+  // Build message
+  const msg = buildAccessMessage(l.name, l.email, code);
+  document.getElementById('acp-message-preview').textContent = msg;
+
+  // Reset copy button
+  const copyBtn = document.getElementById('acp-copy-btn');
+  copyBtn.textContent = '📋 Copy Message';
+  copyBtn.className = 'acp-btn acp-btn-ghost';
+
+  document.getElementById('access-code-popup-overlay').classList.add('open');
+}
+
+function buildAccessMessage(name, email, code) {
+  const firstName = name.split(' ')[0];
+  return `Hi ${firstName},
+
+Great news — you've been granted access to the Street Simulator! 🎉
+
+Your login details:
+  Email: ${email}
+  Access Code: ${code || '(see your original registration confirmation)'}
+
+To get started, visit the simulator and enter your email address followed by your 4-digit code when prompted. Keep this code safe — you'll need it every time you log in.
+
+If you have any issues accessing the simulator, please don't hesitate to get in touch.
+
+Best wishes`;
+}
+
+function acpCopyMessage() {
+  const msg = buildAccessMessage(_acpData.learner?.name, _acpData.learner?.email, _acpData.code);
+  navigator.clipboard.writeText(msg).then(() => {
+    const btn = document.getElementById('acp-copy-btn');
+    btn.textContent = '✓ Copied!';
+    btn.className = 'acp-btn acp-btn-copy-confirm';
+    setTimeout(() => {
+      btn.textContent = '📋 Copy Message';
+      btn.className = 'acp-btn acp-btn-ghost';
+    }, 2500);
+  }).catch(() => showToast('⚠️ Could not copy — please copy manually'));
+}
+
+function acpOpenEmail() {
+  const l = _acpData.learner;
+  const code = _acpData.code;
+  const subject = encodeURIComponent('Your Street Simulator Access');
+  const body = encodeURIComponent(buildAccessMessage(l?.name, l?.email, code));
+  window.open(`mailto:${l?.email || ''}?subject=${subject}&body=${body}`, '_blank');
+}
+
+function closeAccessCodePopup(e) {
+  if (e && e.target !== document.getElementById('access-code-popup-overlay')) return;
+  document.getElementById('access-code-popup-overlay').classList.remove('open');
 }
 
 // ===== KPI MODAL =====
@@ -2299,6 +2475,7 @@ function updateAccessModal(learnerId, email, grant, rowEl) {
       ? `<span class="badge badge-green">✓ Access Given</span>`
       : `<span class="badge badge-red">✕ Declined</span>`;
   }
+  // Note: showAccessCodePopup is called inside updateAccess for grants
 }
 
 function approveAllPending() {
@@ -2436,5 +2613,33 @@ window.addEventListener('DOMContentLoaded', () => {
   connectLive();
 });
 </script>
+<!-- ===== ACCESS CODE POPUP ===== -->
+<div id="access-code-popup-overlay" onclick="closeAccessCodePopup(event)">
+  <div class="acp-modal">
+    <div class="acp-header">
+      <div class="acp-header-top">
+        <div class="acp-title">🎉 Access Granted</div>
+        <button class="acp-close" onclick="closeAccessCodePopup()">✕</button>
+      </div>
+      <div class="acp-learner-info">
+        <span class="acp-learner-name" id="acp-learner-name"></span>
+        &nbsp;·&nbsp;<span id="acp-learner-email"></span>
+      </div>
+    </div>
+    <div class="acp-body">
+      <div class="acp-code-label">Their 4-Digit Access Code</div>
+      <div class="acp-code-boxes" id="acp-code-boxes"></div>
+      <div class="acp-code-hint">Share this code with the learner — they'll need it to enter the simulator</div>
+      <div class="acp-divider"></div>
+      <div class="acp-message-label">📨 Ready-to-Send Message</div>
+      <div class="acp-message-preview" id="acp-message-preview"></div>
+      <div class="acp-actions">
+        <button class="acp-btn acp-btn-ghost" id="acp-copy-btn" onclick="acpCopyMessage()">📋 Copy Message</button>
+        <button class="acp-btn acp-btn-primary" id="acp-email-btn" onclick="acpOpenEmail()">✉️ Open in Mail</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
