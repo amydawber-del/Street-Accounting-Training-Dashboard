@@ -744,29 +744,19 @@ td {
 }
 #access-code-popup-overlay.open { display: flex; opacity: 1; }
 .acp-modal {
-  background: var(--white);
-  border-radius: 20px;
+  background: var(--white); border-radius: 20px;
   width: 480px; max-width: 95vw;
-  box-shadow: var(--shadow-lg);
-  overflow: hidden;
+  box-shadow: var(--shadow-lg); overflow: hidden;
   animation: fadeUp 0.25s ease both;
 }
-.acp-header {
-  background: var(--navy);
-  padding: 24px 28px 20px;
-  position: relative;
-}
-.acp-header-top {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 4px;
-}
+.acp-header { background: var(--navy); padding: 24px 28px 20px; }
+.acp-header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
 .acp-title { font-size: 18px; font-weight: 800; color: white; letter-spacing: -0.3px; }
 .acp-close {
   width: 30px; height: 30px; border-radius: 8px;
-  background: rgba(255,255,255,0.1); border: none;
-  cursor: pointer; color: rgba(255,255,255,0.6); font-size: 16px;
-  display: flex; align-items: center; justify-content: center;
-  transition: var(--transition);
+  background: rgba(255,255,255,0.1); border: none; cursor: pointer;
+  color: rgba(255,255,255,0.6); font-size: 16px;
+  display: flex; align-items: center; justify-content: center; transition: var(--transition);
 }
 .acp-close:hover { background: rgba(255,255,255,0.2); color: white; }
 .acp-learner-info { font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 2px; }
@@ -774,45 +764,32 @@ td {
 .acp-body { padding: 28px; }
 .acp-code-label {
   font-size: 11px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.8px; color: var(--text-muted); text-align: center;
-  margin-bottom: 14px;
+  letter-spacing: 0.8px; color: var(--text-muted); text-align: center; margin-bottom: 14px;
 }
-.acp-code-boxes {
-  display: flex; gap: 10px; justify-content: center;
-  margin-bottom: 8px;
-}
+.acp-code-boxes { display: flex; gap: 10px; justify-content: center; margin-bottom: 8px; }
 .acp-code-digit {
-  width: 64px; height: 72px;
-  background: var(--navy);
-  border-radius: 14px;
+  width: 64px; height: 72px; background: var(--navy); border-radius: 14px;
   display: flex; align-items: center; justify-content: center;
   font-size: 34px; font-weight: 800; color: white;
   font-family: 'DM Mono', monospace;
   box-shadow: 0 4px 16px rgba(18,21,42,0.18);
+  transition: var(--transition);
 }
-.acp-code-hint {
-  text-align: center; font-size: 12px; color: var(--text-muted);
-  margin-bottom: 24px;
-}
+.acp-code-loading { background: var(--navy-lighter); color: rgba(255,255,255,0.25); font-size: 28px; }
+.acp-code-hint { text-align: center; font-size: 12px; color: var(--text-muted); margin-bottom: 24px; }
 .acp-divider { height: 1px; background: var(--border-light); margin-bottom: 20px; }
 .acp-message-label {
   font-size: 11px; font-weight: 700; text-transform: uppercase;
   letter-spacing: 0.8px; color: var(--text-muted); margin-bottom: 10px;
 }
 .acp-message-preview {
-  background: var(--bg);
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 12px 14px;
-  font-size: 12px; color: var(--text);
-  line-height: 1.6; margin-bottom: 14px;
-  max-height: 120px; overflow-y: auto;
-  white-space: pre-wrap;
+  background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  padding: 12px 14px; font-size: 12px; color: var(--text); line-height: 1.6;
+  margin-bottom: 14px; max-height: 120px; overflow-y: auto; white-space: pre-wrap;
 }
 .acp-actions { display: flex; gap: 8px; }
 .acp-btn {
-  flex: 1; padding: 11px 14px;
-  border-radius: var(--radius-sm);
+  flex: 1; padding: 11px 14px; border-radius: var(--radius-sm);
   font-family: inherit; font-size: 13px; font-weight: 600;
   cursor: pointer; border: none; transition: var(--transition);
   display: flex; align-items: center; justify-content: center; gap: 6px;
@@ -1486,53 +1463,33 @@ async function connectLive() {
 function processLiveData(data) {
   APP.learners = (data.learners || []).map(row => {
 
-    // ── Field resolvers ───────────────────────────────────────────────────────
-    // Each resolver tries the new header-derived key first, then legacy fallbacks.
-    // Apps Script camelCases headers: "Learner Name" → learnerName, etc.
-    // Special chars are stripped before camelCasing: "Company / Agency" → companyAgency
-    //                                                 "Overall Progress %" → overallProgress
-    //                                                 "access code" → accessCode
-
-    // Col A  — User ID
-    const rawId = row['userId'] || row['User ID'] || row['learnerId'] || row['id'] || '';
-
-    // Col B  — Learner Name
-    const rawName = row['learnerName'] || row['Learner Name'] || row['name'] || '';
-
-    // Col C  — Email (unchanged)
-    const rawEmail = row['email'] || row['Email'] || '';
-
-    // Col D  — Company / Agency  ("/ " stripped → companyAgency)
-    const rawCompany = row['companyAgency'] || row['Company / Agency'] || row['company/Agency'] || row['company'] || row['Company'] || '';
-
-    // Col E  — First Seen  (camelCase unchanged)
-    const rawFirstSeen = row['firstSeen'] || row['First Seen'] || row['timestamp'] || '';
-
-    // Col F  — Last Active  (camelCase unchanged)
-    const rawLastActive = row['lastActive'] || row['Last Active'] || '';
-
-    // Col G  — Overall Progress %  ("%" stripped → overallProgress)
-    const rawProgress = row['overallProgress'] || row['Overall Progress %'] || row['overallProgress%'] || row['progress'] || null;
-
-    // Col H  — Modules Completed  (camelCase unchanged)
-    const rawModsCompleted = row['modulesCompleted'] || row['Modules Completed'] || null;
-
-    // Col I  — Modules Total  (camelCase unchanged)
+    // Col A  User ID
+    const rawId       = row['userId']        || row['User ID']         || row['learnerId'] || row['id'] || '';
+    // Col B  Learner Name
+    const rawName     = row['learnerName']   || row['Learner Name']    || row['name'] || '';
+    // Col C  Email
+    const rawEmail    = row['email']         || row['Email']           || '';
+    // Col D  Company / Agency  → camelCased: companyAgency
+    const rawCompany  = row['companyAgency'] || row['Company / Agency']|| row['company/Agency'] || row['company'] || '';
+    // Col E  First Seen
+    const rawFirstSeen = row['firstSeen']    || row['First Seen']      || row['timestamp'] || '';
+    // Col F  Last Active
+    const rawLastActive = row['lastActive']  || row['Last Active']     || '';
+    // Col G  Overall Progress %  → camelCased: overallProgress (% stripped)
+    const rawProgress  = row['overallProgress'] || row['Overall Progress %'] || row['overallProgress%'] || row['progress'] ?? null;
+    // Col H  Modules Completed
+    const rawModsCompleted = row['modulesCompleted'] || row['Modules Completed'] ?? null;
+    // Col I  Modules Total
     const rawModsTotal = row['modulesTotal'] || row['Modules Total'] || null;
+    // Col J  Confidence Score  → camelCased: confidenceScore
+    const rawConfidence = row['confidenceScore'] || row['Confidence Score'] || row['confidence'] ?? null;
+    // Col K  Status  (informational — not used for access logic)
+    // Col L  Learner Access  → camelCased: learnerAccess
+    const rawAccess   = row['learnerAccess'] || row['Learner Access']  || row['approved'] || '';
+    // Col M  access code  → camelCased: accessCode
+    const rawCode     = row['accessCode']    || row['access code']     || row['access_code'] || row['Access Code'] || '';
 
-    // Col J  — Confidence Score  ("Score" added → confidenceScore)
-    const rawConfidence = row['confidenceScore'] || row['Confidence Score'] || row['confidence'] || null;
-
-    // Col K  — Status  (new column — informational, not used to drive access logic)
-    // Col L  — Learner Access  (replaces old "approved" boolean → now text TRUE/FALSE/Pending)
-    const rawAccess = row['learnerAccess'] || row['Learner Access'] || row['approved'] || '';
-
-    // Col M  — access code  (camelCase: accessCode)
-    const rawCode = row['accessCode'] || row['access code'] || row['access_code'] || row['Access Code'] || '';
-
-    // ── Derived values ────────────────────────────────────────────────────────
-
-    // Confidence: sheet value takes priority; fall back to last matching event
+    // Confidence: sheet value > last event fallback
     const confFromEvents = data.events ? (() => {
       const evs = (data.events||[]).filter(e => e.email === rawEmail && e.confidenceScore && e.confidenceScore !== '');
       return evs.length ? parseFloat(evs[evs.length-1].confidenceScore) : null;
@@ -1540,7 +1497,7 @@ function processLiveData(data) {
     const confidence = (rawConfidence !== null && rawConfidence !== undefined && rawConfidence !== '')
       ? Number(rawConfidence) : confFromEvents;
 
-    // Progress: sheet value takes priority; fall back to last matching event
+    // Progress: sheet value > last event fallback
     const progFromEvents = data.events ? (() => {
       const evs = (data.events||[]).filter(e => e.email === rawEmail && e.overallProgressPct !== undefined && e.overallProgressPct !== '');
       return evs.length ? parseFloat(evs[evs.length-1].overallProgressPct) : 0;
@@ -1548,7 +1505,7 @@ function processLiveData(data) {
     const progress = (rawProgress !== null && rawProgress !== undefined && rawProgress !== '')
       ? Number(rawProgress) : progFromEvents;
 
-    // Modules completed: sheet value takes priority; fall back to last matching event
+    // Modules completed: sheet value > last event fallback
     const modsFromEvents = data.events ? (() => {
       const evs = (data.events||[]).filter(e => e.email === rawEmail && e.modulesCompleted !== undefined && e.modulesCompleted !== '');
       return evs.length ? parseInt(evs[evs.length-1].modulesCompleted) : 0;
@@ -1556,7 +1513,6 @@ function processLiveData(data) {
     const modulesCompleted = (rawModsCompleted !== null && rawModsCompleted !== undefined && rawModsCompleted !== '')
       ? Number(rawModsCompleted) : modsFromEvents;
 
-    // Access: "Learner Access" column may hold TRUE/FALSE boolean or text
     const isApproved = rawAccess === true || String(rawAccess).toUpperCase() === 'TRUE';
 
     return {
@@ -1576,7 +1532,6 @@ function processLiveData(data) {
     };
   });
   APP.events = data.events || [];
-  // Store module-level progress from Module Progress sheet (if Apps Script returns it)
   APP.moduleProgress = data.moduleProgress || [];
 }
 
@@ -2326,37 +2281,53 @@ async function updateAccess(learnerId, email, grant) {
   if (document.getElementById('side-drawer').classList.contains('open')) openDrawer(learnerId);
   showToast(grant ? `✓ Access granted to ${l?.name || email}` : `✕ Access declined for ${l?.name || email}`);
   if (APP.isDemo) { showToast('Demo mode — changes not saved to sheet'); return; }
-  try {
-    const res = await fetch(SHEETS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'updateAccess', email: email, approved: grant })
-    });
-    if (grant && l) {
-      try { const d = await res.json(); if (d.accessCode) l.accessCode = d.accessCode; } catch(e) {}
-      showAccessCodePopup(l);
+
+  // Fire the POST (no need to parse response body — GAS redirects make fetch() JSON unreliable)
+  fetch(SHEETS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ action: 'updateAccess', email: email, approved: grant })
+  }).catch(() => showToast('⚠️ Could not sync to sheet — try refreshing'));
+
+  // If granting: fetch the code back via JSONP (reliable, no CORS issues) then show popup
+  if (grant && l) {
+    showAccessCodePopup(l, true); // show immediately with loading state
+    try {
+      const result = await jsonpFetch(SHEETS_URL, { action: 'getAccessCode', email: email }, 12000);
+      if (result.accessCode) {
+        l.accessCode = result.accessCode;
+        showAccessCodePopup(l, false); // re-render with real code
+      }
+    } catch(e) {
+      // Popup already showing — code column will just display ????
+      console.warn('Could not fetch access code:', e);
     }
-  } catch(e) {
-    showToast('⚠️ Could not sync to sheet — try refreshing');
-    if (grant && l) showAccessCodePopup(l);
   }
 }
 
 // ===== ACCESS CODE POPUP =====
 let _acpData = {};
 
-function showAccessCodePopup(l) {
+function showAccessCodePopup(l, loading) {
   const code = l.accessCode || '';
   _acpData = { learner: l, code };
   document.getElementById('acp-learner-name').textContent = l.name;
   document.getElementById('acp-learner-email').textContent = l.email;
-  const digits = code ? code.toString().padStart(4,'0').split('') : ['?','?','?','?'];
-  document.getElementById('acp-code-boxes').innerHTML = digits.map(d =>
-    `<div class="acp-code-digit">${d}</div>`).join('');
-  document.getElementById('acp-message-preview').textContent = buildAccessMessage(l.name, l.email, code);
-  const copyBtn = document.getElementById('acp-copy-btn');
-  copyBtn.textContent = '📋 Copy Message';
-  copyBtn.className = 'acp-btn acp-btn-ghost';
+
+  if (loading) {
+    document.getElementById('acp-code-boxes').innerHTML =
+      ['','','',''].map(() => `<div class="acp-code-digit acp-code-loading">·</div>`).join('');
+    document.getElementById('acp-message-preview').textContent = 'Fetching access code…';
+  } else {
+    const digits = code ? code.toString().padStart(4,'0').split('') : ['?','?','?','?'];
+    document.getElementById('acp-code-boxes').innerHTML = digits.map(d =>
+      `<div class="acp-code-digit">${d}</div>`).join('');
+    document.getElementById('acp-message-preview').textContent = buildAccessMessage(l.name, l.email, code);
+    const copyBtn = document.getElementById('acp-copy-btn');
+    copyBtn.textContent = '📋 Copy Message';
+    copyBtn.className = 'acp-btn acp-btn-ghost';
+  }
+
   document.getElementById('access-code-popup-overlay').classList.add('open');
 }
 
@@ -2368,7 +2339,7 @@ Great news — you've been granted access to the Street Simulator! 🎉
 
 Your login details:
   Email: ${email}
-  Access Code: ${code || '(see your original registration confirmation)'}
+  Access Code: ${code || '????'}
 
 To get started, visit the simulator and enter your email address followed by your 4-digit code when prompted. Keep this code safe — you'll need it every time you log in.
 
@@ -2473,14 +2444,13 @@ function closeKPIModal(e) {
 
 function updateAccessModal(learnerId, email, grant, rowEl) {
   rowEl.querySelectorAll('.access-btn').forEach(b => b.disabled = true);
-  updateAccess(learnerId, email, grant);
+  updateAccess(learnerId, email, grant); // popup fires inside updateAccess on grant
   const actionsDiv = rowEl.querySelector('.modal-learner-actions');
   if (actionsDiv) {
     actionsDiv.innerHTML = grant
       ? `<span class="badge badge-green">✓ Access Given</span>`
       : `<span class="badge badge-red">✕ Declined</span>`;
   }
-  // showAccessCodePopup fires inside updateAccess for grants
 }
 
 function approveAllPending() {
