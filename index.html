@@ -1341,6 +1341,28 @@ function computeMetrics(learners) {
 // ===== HARDCODED CONFIG =====
 const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbw74bw0afMulQM57qK8Idv-Rjuk8EFm1cpcDbyi-8jis7wJhzAR_3_8MCI8wbHmEMg/exec';
 
+// ===== JSONP HELPER =====
+// Google Apps Script redirects cause CORS preflight failures with fetch().
+// JSONP bypasses CORS entirely by injecting a <script> tag instead.
+function jsonpFetch(url, params, timeoutMs = 20000) {
+  return new Promise((resolve, reject) => {
+    const cbName = '_gasCb_' + Math.random().toString(36).slice(2);
+    const qs = new URLSearchParams({ ...params, callback: cbName }).toString();
+    const script = document.createElement('script');
+    let done = false;
+    const cleanup = () => {
+      done = true;
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    };
+    window[cbName] = (data) => { cleanup(); resolve(data); };
+    script.onerror = () => { cleanup(); reject(new Error('JSONP request failed — check the script URL and deployment')); };
+    script.src = url + '?' + qs;
+    document.head.appendChild(script);
+    setTimeout(() => { if (!done) { cleanup(); reject(new Error('JSONP request timed out')); } }, timeoutMs);
+  });
+}
+
 // ===== CONNECT OVERLAY =====
 async function connectLive() {
   const err = document.getElementById('connect-error');
@@ -1350,9 +1372,7 @@ async function connectLive() {
   APP.adminToken = '';
   subText.textContent = 'Fetching learner data…';
   try {
-    const qs = new URLSearchParams({ action: 'getAdminData' }).toString();
-    const resp = await fetch(`${SHEETS_URL}?${qs}`);
-    const data = await resp.json();
+    const data = await jsonpFetch(SHEETS_URL, { action: 'getAdminData' });
     if (data.status !== 'ok') {
       err.textContent = 'Error from script: ' + (data.message || data.status);
       err.style.color = '#fca5a5'; err.classList.add('visible');
@@ -1447,9 +1467,7 @@ async function refreshData() {
   const icon = document.getElementById('refresh-icon');
   icon.classList.add('spin');
   try {
-    const qs = new URLSearchParams({ action: 'getAdminData' }).toString();
-    const resp = await fetch(`${SHEETS_URL}?${qs}`);
-    const data = await resp.json();
+    const data = await jsonpFetch(SHEETS_URL, { action: 'getAdminData' });
     if (data.status === 'ok') {
       processLiveData(data);
       APP.lastUpdated = new Date();
@@ -2184,7 +2202,9 @@ async function updateAccess(learnerId, email, grant) {
   try {
     await fetch(SHEETS_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      // 'text/plain' is a CORS "simple" content-type — avoids the OPTIONS preflight
+      // that 'application/json' triggers. GAS still receives the JSON body fine.
+      headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({
         action: 'updateAccess',
         email: email,
