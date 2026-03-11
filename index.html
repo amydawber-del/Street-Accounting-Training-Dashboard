@@ -821,16 +821,12 @@ td {
         <span class="connect-logo-sub">Trainer Dashboard</span>
       </div>
     </div>
-    <div class="connect-title">Connect to your data</div>
-    <div class="connect-sub">Enter your Apps Script URL and admin token to load live learner data, or use demo mode with realistic placeholder data.</div>
-    <label class="connect-label">Apps Script URL</label>
-    <input class="connect-input" id="cfg-url" type="url" placeholder="https://script.google.com/macros/s/…/exec">
-    <label class="connect-label">Admin Token</label>
-    <input class="connect-input" id="cfg-token" type="password" placeholder="Your admin token (set in Apps Script)">
+    <div class="connect-title">Loading dashboard…</div>
+    <div class="connect-sub" id="connect-sub-text">Connecting to your learner data.</div>
     <div id="connect-error" class="connect-error"></div>
-    <div class="connect-row">
-      <button class="connect-btn" onclick="connectLive()">🔗 Connect & Load</button>
-      <button class="connect-demo-btn" onclick="loadDemo()">Demo Mode</button>
+    <div class="connect-row" style="margin-top:8px">
+      <button class="connect-btn" onclick="connectLive()" id="retry-btn" style="display:none">↺ Retry</button>
+      <button class="connect-demo-btn" onclick="loadDemo()" id="demo-fallback-btn" style="display:none">Use Demo Mode Instead</button>
     </div>
   </div>
 </div>
@@ -1091,28 +1087,37 @@ function computeMetrics(learners) {
   return { total, active: active.length, pending: pending.length, declined: declined.length, completed: completed.length, atRisk: atRisk.length, avgProgress, avgConf };
 }
 
+// ===== HARDCODED CONFIG =====
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbw74bw0afMulQM57qK8Idv-Rjuk8EFm1cpcDbyi-8jis7wJhzAR_3_8MCI8wbHmEMg/exec';
+
 // ===== CONNECT OVERLAY =====
 async function connectLive() {
-  const url = document.getElementById('cfg-url').value.trim();
-  const token = document.getElementById('cfg-token').value.trim();
   const err = document.getElementById('connect-error');
+  const subText = document.getElementById('connect-sub-text');
   err.classList.remove('visible');
-  if (!url) { err.textContent = 'Please enter your Apps Script URL.'; err.classList.add('visible'); return; }
-  if (!token) { err.textContent = 'Please enter your admin token.'; err.classList.add('visible'); return; }
-  APP.sheetsUrl = url; APP.adminToken = token;
-  err.textContent = '⏳ Connecting…'; err.classList.add('visible'); err.style.color = '#a78bfa';
+  APP.sheetsUrl = SHEETS_URL;
+  APP.adminToken = '';
+  subText.textContent = 'Fetching learner data…';
   try {
-    const qs = new URLSearchParams({ action: 'getAdminData', admin_token: token }).toString();
-    const resp = await fetch(`${url}?${qs}`);
+    const qs = new URLSearchParams({ action: 'getAdminData' }).toString();
+    const resp = await fetch(`${SHEETS_URL}?${qs}`);
     const data = await resp.json();
-    if (data.status === 'unauthorized') { err.textContent = 'Invalid admin token.'; err.style.color = '#fca5a5'; return; }
-    if (data.status !== 'ok') { err.textContent = 'Unexpected response: ' + data.message; err.style.color = '#fca5a5'; return; }
+    if (data.status !== 'ok') {
+      err.textContent = 'Error from script: ' + (data.message || data.status);
+      err.style.color = '#fca5a5'; err.classList.add('visible');
+      document.getElementById('retry-btn').style.display = 'block';
+      document.getElementById('demo-fallback-btn').style.display = 'block';
+      subText.textContent = 'Could not connect to your Google Sheet.';
+      return;
+    }
     processLiveData(data);
-    localStorage.setItem('admin_url', url);
-    localStorage.setItem('admin_token', token);
     launchDashboard(false);
   } catch(e) {
-    err.textContent = 'Connection failed: ' + e.message; err.style.color = '#fca5a5';
+    err.textContent = 'Connection failed: ' + e.message;
+    err.style.color = '#fca5a5'; err.classList.add('visible');
+    document.getElementById('retry-btn').style.display = 'block';
+    document.getElementById('demo-fallback-btn').style.display = 'block';
+    subText.textContent = 'Could not reach the Apps Script endpoint.';
   }
 }
 
@@ -1176,12 +1181,12 @@ function launchDashboard(isDemo) {
 }
 
 async function refreshData() {
-  if (APP.isDemo) { alert('You\'re in demo mode. Connect to live data to refresh.'); return; }
+  if (APP.isDemo) { alert('You\'re in demo mode. Reload the page to connect to live data.'); return; }
   const icon = document.getElementById('refresh-icon');
   icon.classList.add('spin');
   try {
-    const qs = new URLSearchParams({ action: 'getAdminData', admin_token: APP.adminToken }).toString();
-    const resp = await fetch(`${APP.sheetsUrl}?${qs}`);
+    const qs = new URLSearchParams({ action: 'getAdminData' }).toString();
+    const resp = await fetch(`${SHEETS_URL}?${qs}`);
     const data = await resp.json();
     if (data.status === 'ok') {
       processLiveData(data);
@@ -1197,14 +1202,17 @@ async function refreshData() {
 }
 
 function disconnectAndReset() {
-  localStorage.removeItem('admin_url');
-  localStorage.removeItem('admin_token');
   APP = { learners:[], events:[], filtered:[], sortCol:'lastActive', sortDir:'desc', isDemo:false, sheetsUrl:'', adminToken:'', lastUpdated:null };
   document.getElementById('main-app').classList.remove('visible');
   document.getElementById('connect-overlay').style.display = 'flex';
   document.getElementById('connection-badge').classList.remove('demo');
   document.getElementById('conn-label').textContent = 'Live';
   document.querySelector('.conn-dot').classList.remove('demo');
+  document.getElementById('connect-sub-text').textContent = 'Connecting to your learner data.';
+  document.getElementById('connect-error').classList.remove('visible');
+  document.getElementById('retry-btn').style.display = 'none';
+  document.getElementById('demo-fallback-btn').style.display = 'none';
+  connectLive();
 }
 
 // ===== FILTERS =====
@@ -1832,14 +1840,9 @@ function exportCSV() {
   a.click();
 }
 
-// ===== AUTO-RESTORE SAVED CONNECTION =====
+// ===== AUTO-CONNECT ON LOAD =====
 window.addEventListener('DOMContentLoaded', () => {
-  const savedUrl = localStorage.getItem('admin_url');
-  const savedToken = localStorage.getItem('admin_token');
-  if (savedUrl && savedToken) {
-    document.getElementById('cfg-url').value = savedUrl;
-    document.getElementById('cfg-token').value = savedToken;
-  }
+  connectLive();
 });
 </script>
 </body>
