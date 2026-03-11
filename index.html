@@ -1,0 +1,1846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Street Simulator — Trainer Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #12152A;
+  --navy-light: #1a1f3a;
+  --navy-lighter: #232845;
+  --purple: #5B4BE7;
+  --purple-light: #7c6ef0;
+  --purple-dark: #4336c4;
+  --purple-glow: rgba(91,75,231,0.12);
+  --white: #ffffff;
+  --bg: #F2F3F8;
+  --card: #ffffff;
+  --border: #E1E3EF;
+  --border-light: #ECEEF7;
+  --text: #12152A;
+  --text-muted: #5E6488;
+  --text-light: #9AA0C0;
+  --success: #17B978;
+  --success-bg: rgba(23,185,120,0.1);
+  --warning: #F59E0B;
+  --warning-bg: rgba(245,158,11,0.1);
+  --danger: #EF4444;
+  --danger-bg: rgba(239,68,68,0.08);
+  --info: #3B82F6;
+  --info-bg: rgba(59,130,246,0.1);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-xs: 6px;
+  --shadow: 0 1px 12px rgba(18,21,42,0.07);
+  --shadow-md: 0 4px 24px rgba(18,21,42,0.1);
+  --shadow-lg: 0 12px 48px rgba(18,21,42,0.15);
+  --transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+a { text-decoration: none; color: inherit; }
+
+/* ===== CONNECT OVERLAY ===== */
+#connect-overlay {
+  position: fixed; inset: 0;
+  background: var(--navy);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999;
+  overflow: hidden;
+}
+#connect-overlay::before {
+  content: '';
+  position: absolute;
+  width: 900px; height: 900px;
+  background: radial-gradient(circle, rgba(91,75,231,0.18) 0%, transparent 65%);
+  top: -300px; right: -200px;
+  pointer-events: none;
+}
+#connect-overlay::after {
+  content: '';
+  position: absolute;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(91,75,231,0.1) 0%, transparent 65%);
+  bottom: -150px; left: -100px;
+  pointer-events: none;
+}
+.connect-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
+  padding: 48px 52px;
+  width: 500px;
+  max-width: 95vw;
+  position: relative;
+  z-index: 1;
+  backdrop-filter: blur(24px);
+  animation: fadeUp 0.5s ease both;
+}
+.connect-logo {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 32px;
+}
+.connect-logo-icon {
+  width: 44px; height: 44px;
+  background: var(--purple);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+}
+.connect-logo-text { color: white; }
+.connect-logo-title { font-size: 18px; font-weight: 700; display: block; }
+.connect-logo-sub { font-size: 11px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.8px; }
+.connect-title { color: white; font-size: 26px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px; }
+.connect-sub { color: rgba(255,255,255,0.4); font-size: 14px; margin-bottom: 32px; line-height: 1.6; }
+.connect-label {
+  display: block; font-size: 11px; font-weight: 700;
+  color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.8px;
+  margin-bottom: 8px;
+}
+.connect-input {
+  width: 100%; padding: 13px 16px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius-sm);
+  color: white; font-family: inherit; font-size: 13px;
+  outline: none; transition: var(--transition);
+  margin-bottom: 14px;
+}
+.connect-input:focus { border-color: var(--purple); background: rgba(91,75,231,0.1); }
+.connect-input::placeholder { color: rgba(255,255,255,0.2); }
+.connect-row { display: flex; gap: 10px; margin-top: 4px; }
+.connect-btn {
+  flex: 1; padding: 13px;
+  background: var(--purple); color: white; border: none;
+  border-radius: var(--radius-sm); font-family: inherit;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  transition: var(--transition);
+}
+.connect-btn:hover { background: var(--purple-light); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(91,75,231,0.4); }
+.connect-demo-btn {
+  padding: 13px 18px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.5); font-family: inherit;
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  border-radius: var(--radius-sm); transition: var(--transition);
+  white-space: nowrap;
+}
+.connect-demo-btn:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); }
+.connect-error {
+  color: #fca5a5; font-size: 13px; margin-top: 10px; display: none;
+}
+.connect-error.visible { display: block; }
+
+/* ===== TOP NAV ===== */
+.topnav {
+  height: 60px;
+  background: var(--navy);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 28px;
+  position: sticky; top: 0; z-index: 100;
+  flex-shrink: 0;
+}
+.topnav-left { display: flex; align-items: center; gap: 16px; }
+.topnav-logo {
+  display: flex; align-items: center; gap: 10px;
+}
+.topnav-logo-icon {
+  width: 32px; height: 32px;
+  background: var(--purple);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+}
+.topnav-logo-text { font-size: 15px; font-weight: 700; color: white; }
+.topnav-logo-sub { font-size: 10px; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.8px; }
+.topnav-divider { width: 1px; height: 28px; background: rgba(255,255,255,0.08); }
+.topnav-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(91,75,231,0.2);
+  border: 1px solid rgba(91,75,231,0.3);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 11px; font-weight: 700;
+  color: #a78bfa;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.topnav-right { display: flex; align-items: center; gap: 10px; }
+.nav-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  font-family: inherit; font-size: 12px; font-weight: 600;
+  cursor: pointer; border: none; transition: var(--transition);
+  color: rgba(255,255,255,0.55);
+  background: transparent;
+}
+.nav-btn:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); }
+.nav-btn-icon { font-size: 14px; }
+.refresh-btn {
+  background: rgba(91,75,231,0.2);
+  border: 1px solid rgba(91,75,231,0.3);
+  color: #a78bfa;
+}
+.refresh-btn:hover { background: rgba(91,75,231,0.35); color: white; }
+#connection-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 11px; font-weight: 600;
+  background: rgba(23,185,120,0.12);
+  border: 1px solid rgba(23,185,120,0.25);
+  color: #34d399;
+}
+#connection-badge.demo {
+  background: rgba(245,158,11,0.12);
+  border-color: rgba(245,158,11,0.25);
+  color: #fbbf24;
+}
+.conn-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #34d399;
+}
+.conn-dot.demo { background: #fbbf24; }
+#last-updated {
+  font-size: 11px; color: rgba(255,255,255,0.25);
+}
+
+/* ===== MAIN WRAPPER ===== */
+#main-app { display: none; flex-direction: column; min-height: 100vh; }
+#main-app.visible { display: flex; }
+
+/* ===== PAGE HEADER ===== */
+.page-header {
+  padding: 24px 28px 0;
+  display: flex; align-items: flex-start; justify-content: space-between;
+  flex-wrap: wrap; gap: 16px;
+}
+.page-header-left { }
+.page-title { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; color: var(--text); }
+.page-sub { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+.page-header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.hdr-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  font-family: inherit; font-size: 13px; font-weight: 600;
+  cursor: pointer; border: none; transition: var(--transition);
+}
+.hdr-btn-ghost {
+  background: var(--card); color: var(--text-muted);
+  border: 1.5px solid var(--border);
+}
+.hdr-btn-ghost:hover { background: var(--bg); color: var(--text); border-color: #c4c8e0; }
+.hdr-btn-primary {
+  background: var(--purple); color: white;
+}
+.hdr-btn-primary:hover { background: var(--purple-light); box-shadow: 0 4px 16px rgba(91,75,231,0.35); }
+.search-wrap {
+  position: relative;
+  display: inline-flex; align-items: center;
+}
+.search-icon {
+  position: absolute; left: 11px;
+  color: var(--text-light); font-size: 14px; pointer-events: none;
+}
+#search-input {
+  padding: 9px 14px 9px 34px;
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text); font-family: inherit; font-size: 13px;
+  outline: none; transition: var(--transition);
+  width: 240px;
+}
+#search-input:focus { border-color: var(--purple); box-shadow: 0 0 0 3px var(--purple-glow); }
+#search-input::placeholder { color: var(--text-light); }
+
+/* ===== KPI CARDS ===== */
+.kpi-section {
+  padding: 20px 28px 4px;
+}
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+.kpi-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+.kpi-card:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--border);
+  border-radius: 12px 12px 0 0;
+}
+.kpi-card.kpi-purple::before { background: var(--purple); }
+.kpi-card.kpi-green::before { background: var(--success); }
+.kpi-card.kpi-amber::before { background: var(--warning); }
+.kpi-card.kpi-red::before { background: var(--danger); }
+.kpi-card.kpi-blue::before { background: var(--info); }
+.kpi-icon {
+  font-size: 20px; margin-bottom: 12px;
+  display: block;
+}
+.kpi-value {
+  font-size: 28px; font-weight: 800;
+  letter-spacing: -1px; line-height: 1;
+  margin-bottom: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.kpi-label {
+  font-size: 12px; font-weight: 500;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+.kpi-change {
+  font-size: 11px; font-weight: 600;
+  margin-top: 8px;
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 2px 8px; border-radius: 999px;
+}
+.kpi-change.up { background: var(--success-bg); color: var(--success); }
+.kpi-change.down { background: var(--danger-bg); color: var(--danger); }
+.kpi-change.neutral { background: var(--bg); color: var(--text-muted); }
+
+/* ===== CHARTS SECTION ===== */
+.charts-section {
+  padding: 16px 28px;
+  display: grid;
+  grid-template-columns: 220px 1fr 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 1200px) {
+  .charts-section { grid-template-columns: 1fr 1fr; }
+}
+.chart-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+.chart-title {
+  font-size: 13px; font-weight: 700;
+  color: var(--text); margin-bottom: 4px;
+}
+.chart-sub {
+  font-size: 11px; color: var(--text-muted);
+  margin-bottom: 16px;
+}
+/* Donut chart */
+.donut-wrap {
+  display: flex; align-items: center; gap: 16px;
+  flex-direction: column;
+}
+.donut-svg { flex-shrink: 0; }
+.donut-legend { width: 100%; }
+.legend-item {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 12px; padding: 4px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+.legend-item:last-child { border-bottom: none; }
+.legend-dot-label { display: flex; align-items: center; gap: 8px; }
+.legend-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.legend-label { color: var(--text-muted); font-size: 11px; }
+.legend-val { font-weight: 700; color: var(--text); font-size: 12px; }
+/* Bar distribution */
+.bar-dist { display: flex; flex-direction: column; gap: 8px; }
+.bar-dist-row { display: flex; align-items: center; gap: 8px; }
+.bar-dist-label { font-size: 11px; color: var(--text-muted); width: 48px; flex-shrink: 0; }
+.bar-dist-track {
+  flex: 1; height: 8px;
+  background: var(--bg); border-radius: 999px;
+  overflow: hidden;
+}
+.bar-dist-fill {
+  height: 100%; border-radius: 999px;
+  transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+  width: 0;
+}
+.bar-dist-count { font-size: 11px; font-weight: 600; color: var(--text); width: 20px; text-align: right; }
+/* Line chart */
+.line-chart-wrap { position: relative; }
+.line-chart-svg { width: 100%; }
+
+/* ===== MAIN CONTENT AREA ===== */
+.content-section {
+  padding: 0 28px 28px;
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 14px;
+  align-items: start;
+}
+@media (max-width: 1100px) {
+  .content-section { grid-template-columns: 1fr; }
+}
+
+/* ===== TABLE CARD ===== */
+.table-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.table-toolbar {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+  flex-wrap: wrap;
+}
+.table-toolbar-title {
+  font-size: 14px; font-weight: 700; color: var(--text);
+  flex: 1; min-width: 120px;
+}
+.table-toolbar-title span {
+  font-size: 12px; font-weight: 500;
+  color: var(--text-muted); margin-left: 6px;
+}
+.filter-select {
+  padding: 7px 12px;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text); font-family: inherit; font-size: 12px;
+  outline: none; cursor: pointer; transition: var(--transition);
+}
+.filter-select:focus { border-color: var(--purple); }
+.table-wrap { overflow-x: auto; }
+table {
+  width: 100%; border-collapse: collapse;
+  font-size: 12.5px;
+}
+thead th {
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 11px; font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  background: #F8F9FD;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition: var(--transition);
+}
+thead th:hover { color: var(--purple); }
+thead th.sort-active { color: var(--purple); }
+thead th .sort-arrow { margin-left: 4px; opacity: 0.4; font-size: 10px; }
+thead th.sort-active .sort-arrow { opacity: 1; }
+tbody tr {
+  border-bottom: 1px solid var(--border-light);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+tbody tr:hover { background: #F5F6FC; }
+tbody tr:last-child { border-bottom: none; }
+td {
+  padding: 11px 14px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.learner-cell { display: flex; align-items: center; gap: 10px; }
+.learner-avatar {
+  width: 30px; height: 30px; border-radius: 8px;
+  background: var(--purple);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800; color: white;
+  flex-shrink: 0;
+}
+.learner-name { font-weight: 600; color: var(--text); font-size: 13px; }
+.learner-email { font-size: 11px; color: var(--text-muted); }
+.company-badge {
+  display: inline-flex; align-items: center;
+  background: var(--bg);
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 11px; font-weight: 600; color: var(--text-muted);
+  white-space: nowrap;
+}
+/* Status badges */
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 11px; font-weight: 700;
+  white-space: nowrap;
+}
+.badge-dot { width: 5px; height: 5px; border-radius: 50%; }
+.badge-green { background: var(--success-bg); color: #059669; }
+.badge-green .badge-dot { background: var(--success); }
+.badge-amber { background: var(--warning-bg); color: #B45309; }
+.badge-amber .badge-dot { background: var(--warning); }
+.badge-red { background: var(--danger-bg); color: #DC2626; }
+.badge-red .badge-dot { background: var(--danger); }
+.badge-blue { background: var(--info-bg); color: #1D4ED8; }
+.badge-blue .badge-dot { background: var(--info); }
+.badge-grey { background: var(--bg); color: var(--text-muted); }
+.badge-grey .badge-dot { background: var(--text-light); }
+.badge-purple { background: var(--purple-glow); color: var(--purple); }
+.badge-purple .badge-dot { background: var(--purple); }
+/* Progress bar in table */
+.prog-cell { display: flex; align-items: center; gap: 8px; min-width: 90px; }
+.prog-bar {
+  flex: 1; height: 5px; background: var(--bg); border-radius: 999px; overflow: hidden;
+}
+.prog-fill { height: 100%; border-radius: 999px; background: var(--purple); }
+.prog-fill.done { background: var(--success); }
+.prog-fill.low { background: var(--danger); }
+.prog-fill.mid { background: var(--warning); }
+.prog-pct { font-size: 12px; font-weight: 700; color: var(--text); min-width: 30px; }
+/* Confidence */
+.conf-stars { display: flex; gap: 2px; }
+.conf-star { width: 10px; height: 10px; border-radius: 2px; background: var(--border); }
+.conf-star.filled { background: var(--purple); }
+.conf-star.low { background: var(--danger); }
+/* Risk flag */
+.risk-flag { font-size: 18px; }
+/* Action label */
+.action-label {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 600;
+  padding: 4px 9px;
+  border-radius: var(--radius-xs);
+  white-space: nowrap;
+}
+.action-grant { background: rgba(59,130,246,0.1); color: #1D4ED8; }
+.action-chase { background: rgba(245,158,11,0.1); color: #B45309; }
+.action-gap { background: rgba(91,75,231,0.1); color: var(--purple); }
+.action-remind { background: rgba(245,158,11,0.08); color: #92400E; }
+.action-intervene { background: rgba(239,68,68,0.1); color: #B91C1C; }
+.action-complete { background: rgba(23,185,120,0.1); color: #065F46; }
+.action-cert { background: rgba(23,185,120,0.12); color: #047857; }
+.action-none { background: var(--bg); color: var(--text-muted); }
+/* Table empty */
+.table-empty {
+  padding: 48px; text-align: center; color: var(--text-muted);
+  font-size: 13px;
+}
+.table-empty-icon { font-size: 36px; margin-bottom: 12px; display: block; }
+/* Table footer */
+.table-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 12px; color: var(--text-muted);
+}
+
+/* ===== ALERTS PANEL ===== */
+.alerts-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.alerts-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.alerts-title { font-size: 14px; font-weight: 700; color: var(--text); }
+.alerts-count {
+  background: var(--danger);
+  color: white; border-radius: 999px;
+  padding: 2px 8px; font-size: 11px; font-weight: 800;
+}
+.alert-group { }
+.alert-group-label {
+  padding: 10px 20px 6px;
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  color: var(--text-light);
+  background: #FAFBFE;
+  border-bottom: 1px solid var(--border-light);
+}
+.alert-item {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-light);
+  cursor: pointer;
+  transition: background 0.15s;
+  display: flex; align-items: center; gap: 10px;
+}
+.alert-item:hover { background: #F5F6FC; }
+.alert-item:last-child { border-bottom: none; }
+.alert-icon { font-size: 18px; flex-shrink: 0; }
+.alert-info { flex: 1; min-width: 0; }
+.alert-name { font-size: 12px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.alert-detail { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.alert-arrow { color: var(--text-light); font-size: 14px; }
+
+/* ===== SIDE DRAWER ===== */
+#drawer-overlay {
+  position: fixed; inset: 0;
+  background: rgba(18,21,42,0.45);
+  z-index: 500;
+  display: none; opacity: 0;
+  transition: opacity 0.25s;
+  backdrop-filter: blur(2px);
+}
+#drawer-overlay.open { display: block; opacity: 1; }
+#side-drawer {
+  position: fixed; top: 0; right: -600px; bottom: 0;
+  width: 560px; max-width: 95vw;
+  background: var(--white);
+  z-index: 501;
+  box-shadow: var(--shadow-lg);
+  transition: right 0.3s cubic-bezier(0.4,0,0.2,1);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+#side-drawer.open { right: 0; }
+.drawer-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 14px;
+  background: var(--navy);
+  flex-shrink: 0;
+}
+.drawer-avatar {
+  width: 44px; height: 44px;
+  border-radius: 12px; background: var(--purple);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 800; color: white;
+  flex-shrink: 0;
+}
+.drawer-header-info { flex: 1; min-width: 0; }
+.drawer-name { font-size: 16px; font-weight: 800; color: white; }
+.drawer-meta { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 2px; }
+.drawer-close {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.1);
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(255,255,255,0.6); font-size: 16px;
+  transition: var(--transition);
+}
+.drawer-close:hover { background: rgba(255,255,255,0.2); color: white; }
+.drawer-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
+.drawer-section { margin-bottom: 24px; }
+.drawer-section-title {
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  color: var(--text-muted); margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-light);
+}
+.drawer-stats-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  margin-bottom: 16px;
+}
+.drawer-stat {
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  text-align: center;
+}
+.drawer-stat-val { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+.drawer-stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.drawer-module-list { display: flex; flex-direction: column; gap: 8px; }
+.drawer-module {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+}
+.drawer-module-icon { font-size: 16px; }
+.drawer-module-info { flex: 1; min-width: 0; }
+.drawer-module-title { font-size: 12px; font-weight: 600; color: var(--text); }
+.drawer-module-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.drawer-module-prog {
+  font-size: 11px; font-weight: 700; color: var(--text-muted);
+  min-width: 30px; text-align: right;
+}
+/* Timeline */
+.timeline { display: flex; flex-direction: column; gap: 0; }
+.timeline-item {
+  display: flex; gap: 12px;
+  position: relative;
+}
+.timeline-left {
+  display: flex; flex-direction: column; align-items: center;
+  width: 24px; flex-shrink: 0;
+}
+.timeline-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--purple);
+  border: 2px solid white;
+  box-shadow: 0 0 0 2px var(--purple);
+  z-index: 1;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+.timeline-dot.grey { background: var(--border); box-shadow: 0 0 0 2px var(--border); }
+.timeline-line {
+  flex: 1; width: 2px; background: var(--border-light);
+  margin: 2px 0;
+}
+.timeline-content { flex: 1; padding-bottom: 16px; }
+.timeline-event { font-size: 12px; font-weight: 600; color: var(--text); }
+.timeline-time { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+/* Notes */
+.drawer-notes {
+  width: 100%; padding: 10px 12px;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text); font-family: inherit; font-size: 12px;
+  outline: none; resize: vertical; min-height: 72px;
+  transition: var(--transition);
+}
+.drawer-notes:focus { border-color: var(--purple); }
+.drawer-action-row {
+  display: flex; gap: 8px; margin-top: 8px;
+}
+.drawer-action-btn {
+  flex: 1; padding: 10px;
+  border-radius: var(--radius-sm);
+  font-family: inherit; font-size: 12px; font-weight: 600;
+  cursor: pointer; border: none; transition: var(--transition);
+}
+.dab-primary { background: var(--purple); color: white; }
+.dab-primary:hover { background: var(--purple-light); }
+.dab-ghost {
+  background: var(--bg); color: var(--text-muted);
+  border: 1.5px solid var(--border);
+}
+.dab-ghost:hover { background: var(--bg); color: var(--text); }
+
+/* ===== UTILS ===== */
+.hidden { display: none !important; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin 0.8s linear infinite; }
+
+/* ===== TAB STRIP ===== */
+.tab-strip {
+  display: flex; gap: 2px;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  border: 1px solid var(--border);
+}
+.tab-btn {
+  padding: 7px 16px;
+  border-radius: 6px; border: none;
+  font-family: inherit; font-size: 12px; font-weight: 600;
+  cursor: pointer; transition: var(--transition);
+  color: var(--text-muted); background: transparent;
+}
+.tab-btn.active {
+  background: var(--white);
+  color: var(--text);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+/* ===== COMPANY VIEW ===== */
+.company-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+  padding: 0 28px 28px;
+}
+.company-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.company-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: #c4c8e0; }
+.company-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.company-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 800; color: white;
+  flex-shrink: 0;
+}
+.company-card-title { font-size: 14px; font-weight: 700; color: var(--text); }
+.company-card-count { font-size: 12px; color: var(--text-muted); }
+.company-stats { display: flex; gap: 0; border-top: 1px solid var(--border-light); padding-top: 14px; }
+.company-stat { flex: 1; text-align: center; padding: 0 8px; }
+.company-stat + .company-stat { border-left: 1px solid var(--border-light); }
+.company-stat-val { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+.company-stat-lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.company-health {
+  margin-top: 14px;
+  display: flex; align-items: center; gap: 8px;
+}
+.health-bar {
+  flex: 1; height: 6px; background: var(--bg); border-radius: 999px; overflow: hidden;
+}
+.health-fill { height: 100%; border-radius: 999px; transition: width 0.8s; }
+.health-label { font-size: 11px; font-weight: 600; }
+.health-score { font-size: 12px; font-weight: 800; color: var(--text); }
+
+/* ===== VIEWS ===== */
+.view { display: none; }
+.view.active { display: block; }
+</style>
+</head>
+<body>
+
+<!-- ===== CONNECT OVERLAY ===== -->
+<div id="connect-overlay">
+  <div class="connect-card">
+    <div class="connect-logo">
+      <div class="connect-logo-icon">📊</div>
+      <div class="connect-logo-text">
+        <span class="connect-logo-title">Street Simulator</span>
+        <span class="connect-logo-sub">Trainer Dashboard</span>
+      </div>
+    </div>
+    <div class="connect-title">Connect to your data</div>
+    <div class="connect-sub">Enter your Apps Script URL and admin token to load live learner data, or use demo mode with realistic placeholder data.</div>
+    <label class="connect-label">Apps Script URL</label>
+    <input class="connect-input" id="cfg-url" type="url" placeholder="https://script.google.com/macros/s/…/exec">
+    <label class="connect-label">Admin Token</label>
+    <input class="connect-input" id="cfg-token" type="password" placeholder="Your admin token (set in Apps Script)">
+    <div id="connect-error" class="connect-error"></div>
+    <div class="connect-row">
+      <button class="connect-btn" onclick="connectLive()">🔗 Connect & Load</button>
+      <button class="connect-demo-btn" onclick="loadDemo()">Demo Mode</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="main-app">
+
+  <!-- TOP NAV -->
+  <nav class="topnav">
+    <div class="topnav-left">
+      <div class="topnav-logo">
+        <div class="topnav-logo-icon">📊</div>
+        <div>
+          <div class="topnav-logo-text">Street Simulator</div>
+          <div class="topnav-logo-sub">Trainer Dashboard</div>
+        </div>
+      </div>
+      <div class="topnav-divider"></div>
+      <div class="topnav-badge">⚡ Admin</div>
+    </div>
+    <div class="topnav-right">
+      <span id="last-updated"></span>
+      <div id="connection-badge"><div class="conn-dot"></div><span id="conn-label">Live</span></div>
+      <button class="nav-btn refresh-btn" onclick="refreshData()">
+        <span class="nav-btn-icon" id="refresh-icon">↻</span> Refresh
+      </button>
+      <button class="nav-btn" onclick="exportCSV()">
+        <span class="nav-btn-icon">↓</span> Export
+      </button>
+      <button class="nav-btn" onclick="disconnectAndReset()">
+        <span class="nav-btn-icon">⇠</span> Disconnect
+      </button>
+    </div>
+  </nav>
+
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-title">Learner Operations</div>
+      <div class="page-sub" id="header-sub">Overview of all learners, progress, and required actions</div>
+    </div>
+    <div class="page-header-right">
+      <div class="tab-strip">
+        <button class="tab-btn active" onclick="switchView('learners', this)">Learners</button>
+        <button class="tab-btn" onclick="switchView('companies', this)">Companies</button>
+      </div>
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-input" placeholder="Search learners…" oninput="applyFilters()">
+      </div>
+      <button class="hdr-btn hdr-btn-ghost" onclick="exportCSV()">↓ Export CSV</button>
+    </div>
+  </div>
+
+  <!-- KPI SECTION -->
+  <div class="kpi-section">
+    <div class="kpi-grid" id="kpi-grid"></div>
+  </div>
+
+  <!-- CHARTS SECTION -->
+  <div class="charts-section" id="charts-section"></div>
+
+  <!-- LEARNER VIEW -->
+  <div id="view-learners" class="view active">
+    <div class="content-section">
+      <!-- TABLE -->
+      <div class="table-card">
+        <div class="table-toolbar">
+          <div class="table-toolbar-title">All Learners <span id="table-count-label"></span></div>
+          <select class="filter-select" id="filter-status" onchange="applyFilters()">
+            <option value="">All Statuses</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Completed">Completed</option>
+            <option value="At Risk">At Risk</option>
+            <option value="Pending Access">Pending Access</option>
+            <option value="Declined">Declined</option>
+          </select>
+          <select class="filter-select" id="filter-company" onchange="applyFilters()">
+            <option value="">All Companies</option>
+          </select>
+          <select class="filter-select" id="filter-risk" onchange="applyFilters()">
+            <option value="">All Learners</option>
+            <option value="at-risk">At Risk Only</option>
+            <option value="confidence-gap">Confidence Gap</option>
+            <option value="inactive">Inactive 7+ Days</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th onclick="sortTable('name')">Learner <span class="sort-arrow">↕</span></th>
+                <th onclick="sortTable('company')">Company <span class="sort-arrow">↕</span></th>
+                <th onclick="sortTable('status')">Status <span class="sort-arrow">↕</span></th>
+                <th onclick="sortTable('accessStatus')">Access <span class="sort-arrow">↕</span></th>
+                <th onclick="sortTable('progress')">Progress <span class="sort-arrow">↕</span></th>
+                <th onclick="sortTable('modules')">Modules <span class="sort-arrow">↕</span></th>
+                <th onclick="sortTable('confidence')">Confidence <span class="sort-arrow">↕</span></th>
+                <th onclick="sortTable('lastActive')">Last Active <span class="sort-arrow">↕</span></th>
+                <th>Risk</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="learner-tbody"></tbody>
+          </table>
+        </div>
+        <div class="table-footer">
+          <span id="table-footer-label">Loading…</span>
+          <span id="table-footer-right" style="color:var(--text-light);font-size:11px;">Click any row to view details</span>
+        </div>
+      </div>
+
+      <!-- ALERTS PANEL -->
+      <div class="alerts-card" id="alerts-panel"></div>
+    </div>
+  </div>
+
+  <!-- COMPANY VIEW -->
+  <div id="view-companies" class="view">
+    <div class="company-grid" id="company-grid"></div>
+  </div>
+
+</div>
+
+<!-- ===== SIDE DRAWER ===== -->
+<div id="drawer-overlay" onclick="closeDrawer()"></div>
+<div id="side-drawer">
+  <div class="drawer-header">
+    <div class="drawer-avatar" id="drawer-avatar"></div>
+    <div class="drawer-header-info">
+      <div class="drawer-name" id="drawer-name"></div>
+      <div class="drawer-meta" id="drawer-meta"></div>
+    </div>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body" id="drawer-body"></div>
+</div>
+
+<script>
+// ===== DATA & STATE =====
+let APP = {
+  learners: [],
+  events: [],
+  filtered: [],
+  sortCol: 'lastActive',
+  sortDir: 'desc',
+  isDemo: false,
+  sheetsUrl: '',
+  adminToken: '',
+  lastUpdated: null
+};
+
+// ===== MOCK DATA =====
+const COMPANY_COLORS = {
+  'Street Digital': '#5B4BE7',
+  'Lemon Fresh Agency': '#F59E0B',
+  'Coastal Media': '#3B82F6',
+  'Nordic Creative': '#17B978',
+  'Pixel Wave Studio': '#EF4444',
+  'Birch Group': '#8B5CF6'
+};
+
+function daysAgo(n) {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toISOString();
+}
+
+const MOCK_LEARNERS = [
+  { id:'U_01', name:'Sarah Mitchell',  email:'sarah.m@streetdigital.com',   company:'Street Digital',      firstSeen: daysAgo(28), lastActive: daysAgo(1),  progress:78, modulesCompleted:4, modulesTotal:5, confidence:7, accessStatus:'Given',   approved:true },
+  { id:'U_02', name:'James Okafor',    email:'james.o@lemonfresh.co.uk',     company:'Lemon Fresh Agency',  firstSeen: daysAgo(22), lastActive: daysAgo(3),  progress:45, modulesCompleted:2, modulesTotal:5, confidence:5, accessStatus:'Given',   approved:true },
+  { id:'U_03', name:'Priya Sharma',    email:'priya.s@nordiccreative.com',   company:'Nordic Creative',     firstSeen: daysAgo(45), lastActive: daysAgo(2),  progress:100,modulesCompleted:5, modulesTotal:5, confidence:9, accessStatus:'Given',   approved:true },
+  { id:'U_04', name:'Tom Bradley',     email:'tom.b@coastalmedia.co.uk',     company:'Coastal Media',       firstSeen: daysAgo(30), lastActive: daysAgo(12), progress:22, modulesCompleted:1, modulesTotal:5, confidence:3, accessStatus:'Given',   approved:true },
+  { id:'U_05', name:'Emma Davis',      email:'emma.d@pixelwave.studio',      company:'Pixel Wave Studio',   firstSeen: daysAgo(18), lastActive: daysAgo(2),  progress:60, modulesCompleted:3, modulesTotal:5, confidence:4, accessStatus:'Given',   approved:true },
+  { id:'U_06', name:'Luke Harrison',   email:'luke.h@birchgroup.com',        company:'Birch Group',         firstSeen: daysAgo(5),  lastActive: daysAgo(5),  progress:0,  modulesCompleted:0, modulesTotal:5, confidence:null, accessStatus:'Pending', approved:false },
+  { id:'U_07', name:'Maria Santos',    email:'maria.s@streetdigital.com',    company:'Street Digital',      firstSeen: daysAgo(35), lastActive: daysAgo(1),  progress:91, modulesCompleted:4, modulesTotal:5, confidence:8, accessStatus:'Given',   approved:true },
+  { id:'U_08', name:'Dan Kowalski',    email:'dan.k@lemonfresh.co.uk',       company:'Lemon Fresh Agency',  firstSeen: daysAgo(40), lastActive: daysAgo(18), progress:15, modulesCompleted:0, modulesTotal:5, confidence:2, accessStatus:'Given',   approved:true },
+  { id:'U_09', name:'Zara Ahmed',      email:'zara.a@nordiccreative.com',    company:'Nordic Creative',     firstSeen: daysAgo(20), lastActive: daysAgo(4),  progress:55, modulesCompleted:2, modulesTotal:5, confidence:6, accessStatus:'Given',   approved:true },
+  { id:'U_10', name:'Chris Fowler',    email:'chris.f@coastalmedia.co.uk',   company:'Coastal Media',       firstSeen: daysAgo(50), lastActive: daysAgo(7),  progress:100,modulesCompleted:5, modulesTotal:5, confidence:10,accessStatus:'Given',   approved:true },
+  { id:'U_11', name:'Nia Williams',    email:'nia.w@pixelwave.studio',       company:'Pixel Wave Studio',   firstSeen: daysAgo(14), lastActive: daysAgo(14), progress:0,  modulesCompleted:0, modulesTotal:5, confidence:null, accessStatus:'Declined', approved:false },
+  { id:'U_12', name:'Ben Carter',      email:'ben.c@birchgroup.com',         company:'Birch Group',         firstSeen: daysAgo(25), lastActive: daysAgo(6),  progress:33, modulesCompleted:1, modulesTotal:5, confidence:4, accessStatus:'Given',   approved:true },
+  { id:'U_13', name:'Alexia Petrova',  email:'alexia.p@streetdigital.com',   company:'Street Digital',      firstSeen: daysAgo(2),  lastActive: daysAgo(2),  progress:0,  modulesCompleted:0, modulesTotal:5, confidence:null, accessStatus:'Pending', approved:false },
+  { id:'U_14', name:'Jack Morrison',   email:'jack.m@lemonfresh.co.uk',      company:'Lemon Fresh Agency',  firstSeen: daysAgo(30), lastActive: daysAgo(3),  progress:72, modulesCompleted:3, modulesTotal:5, confidence:3, accessStatus:'Given',   approved:true },
+  { id:'U_15', name:'Sophie Laurent',  email:'sophie.l@nordiccreative.com',  company:'Nordic Creative',     firstSeen: daysAgo(22), lastActive: daysAgo(5),  progress:48, modulesCompleted:2, modulesTotal:5, confidence:5, accessStatus:'Given',   approved:true },
+  { id:'U_16', name:'Ryan O\'Brien',   email:'ryan.o@coastalmedia.co.uk',    company:'Coastal Media',       firstSeen: daysAgo(35), lastActive: daysAgo(21), progress:11, modulesCompleted:0, modulesTotal:5, confidence:2, accessStatus:'Given',   approved:true },
+  { id:'U_17', name:'Aisha Mensah',    email:'aisha.m@pixelwave.studio',     company:'Pixel Wave Studio',   firstSeen: daysAgo(38), lastActive: daysAgo(4),  progress:100,modulesCompleted:5, modulesTotal:5, confidence:8, accessStatus:'Given',   approved:true },
+  { id:'U_18', name:'Matt Jenkins',    email:'matt.j@birchgroup.com',        company:'Birch Group',         firstSeen: daysAgo(1),  lastActive: daysAgo(1),  progress:0,  modulesCompleted:0, modulesTotal:5, confidence:null, accessStatus:'Pending', approved:false },
+  { id:'U_19', name:'Chloe Turner',    email:'chloe.t@streetdigital.com',    company:'Street Digital',      firstSeen: daysAgo(40), lastActive: daysAgo(2),  progress:84, modulesCompleted:4, modulesTotal:5, confidence:9, accessStatus:'Given',   approved:true },
+  { id:'U_20', name:'Ravi Patel',      email:'ravi.p@coastalmedia.co.uk',    company:'Coastal Media',       firstSeen: daysAgo(20), lastActive: daysAgo(8),  progress:29, modulesCompleted:1, modulesTotal:5, confidence:4, accessStatus:'Given',   approved:true },
+];
+
+const MODULE_NAMES = [
+  { icon:'⚙️', title:'Account Setup & Configuration' },
+  { icon:'💼', title:'Client & Job Management' },
+  { icon:'🧾', title:'Invoicing & Billing Workflows' },
+  { icon:'📊', title:'Reporting & Reconciliation' },
+  { icon:'🏆', title:'Advanced Scenarios & Review' },
+];
+
+// ===== DERIVED METRICS =====
+function getAtRisk(l) {
+  if (!l.approved) return false;
+  const daysSince = daysSinceActive(l);
+  return (daysSince > 7 && l.progress < 50) || (daysSince > 14);
+}
+function getConfidenceGap(l) {
+  return l.approved && l.progress > 60 && l.confidence !== null && l.confidence < 5;
+}
+function getStatus(l) {
+  if (l.accessStatus === 'Declined') return 'Declined';
+  if (!l.approved) return 'Pending Access';
+  if (l.progress === 100) return 'Completed';
+  if (getAtRisk(l)) return 'At Risk';
+  return 'In Progress';
+}
+function getRecommendedAction(l) {
+  if (l.accessStatus === 'Pending') return { label:'Grant Access', cls:'action-grant', icon:'🔑' };
+  if (l.accessStatus === 'Declined') return { label:'Access Declined', cls:'action-none', icon:'🚫' };
+  if (l.progress === 100) return { label:'Certificate Ready', cls:'action-cert', icon:'🏆' };
+  if (getConfidenceGap(l)) return { label:'Review Confidence Gap', cls:'action-gap', icon:'💡' };
+  if (daysSinceActive(l) > 14) return { label:'Urgent Intervention', cls:'action-intervene', icon:'🚨' };
+  if (daysSinceActive(l) > 7) return { label:'Send Reminder', cls:'action-remind', icon:'📩' };
+  if (l.progress < 30 && l.progress > 0) return { label:'Chase Progress', cls:'action-chase', icon:'⚡' };
+  if (l.progress >= 85) return { label:'Ready to Complete', cls:'action-complete', icon:'✅' };
+  return { label:'No Action Needed', cls:'action-none', icon:'—' };
+}
+function daysSinceActive(l) {
+  const d = new Date(l.lastActive);
+  return Math.floor((Date.now() - d.getTime()) / 86400000);
+}
+function formatDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+}
+function formatRelative(iso) {
+  const n = daysSinceActive({ lastActive: iso });
+  if (n === 0) return 'Today';
+  if (n === 1) return 'Yesterday';
+  return `${n}d ago`;
+}
+function initials(name) {
+  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+}
+
+// ===== COMPUTE TOP-LEVEL METRICS =====
+function computeMetrics(learners) {
+  const total = learners.length;
+  const approved = learners.filter(l => l.approved);
+  const active = approved.filter(l => l.progress > 0 && daysSinceActive(l) <= 7 && l.progress < 100);
+  const pending = learners.filter(l => l.accessStatus === 'Pending');
+  const declined = learners.filter(l => l.accessStatus === 'Declined');
+  const completed = learners.filter(l => l.progress === 100);
+  const atRisk = approved.filter(getAtRisk);
+  const withProgress = approved.filter(l => l.progress > 0);
+  const avgProgress = withProgress.length ? Math.round(withProgress.reduce((s,l) => s+l.progress,0)/withProgress.length) : 0;
+  const withConf = approved.filter(l => l.confidence !== null);
+  const avgConf = withConf.length ? (withConf.reduce((s,l) => s+l.confidence,0)/withConf.length).toFixed(1) : '—';
+  return { total, active: active.length, pending: pending.length, declined: declined.length, completed: completed.length, atRisk: atRisk.length, avgProgress, avgConf };
+}
+
+// ===== CONNECT OVERLAY =====
+async function connectLive() {
+  const url = document.getElementById('cfg-url').value.trim();
+  const token = document.getElementById('cfg-token').value.trim();
+  const err = document.getElementById('connect-error');
+  err.classList.remove('visible');
+  if (!url) { err.textContent = 'Please enter your Apps Script URL.'; err.classList.add('visible'); return; }
+  if (!token) { err.textContent = 'Please enter your admin token.'; err.classList.add('visible'); return; }
+  APP.sheetsUrl = url; APP.adminToken = token;
+  err.textContent = '⏳ Connecting…'; err.classList.add('visible'); err.style.color = '#a78bfa';
+  try {
+    const qs = new URLSearchParams({ action: 'getAdminData', admin_token: token }).toString();
+    const resp = await fetch(`${url}?${qs}`);
+    const data = await resp.json();
+    if (data.status === 'unauthorized') { err.textContent = 'Invalid admin token.'; err.style.color = '#fca5a5'; return; }
+    if (data.status !== 'ok') { err.textContent = 'Unexpected response: ' + data.message; err.style.color = '#fca5a5'; return; }
+    processLiveData(data);
+    localStorage.setItem('admin_url', url);
+    localStorage.setItem('admin_token', token);
+    launchDashboard(false);
+  } catch(e) {
+    err.textContent = 'Connection failed: ' + e.message; err.style.color = '#fca5a5';
+  }
+}
+
+function processLiveData(data) {
+  APP.learners = (data.learners || []).map(row => {
+    const prog = row.progressJson ? (() => { try { return JSON.parse(row.progressJson); } catch(e){ return null; }})() : null;
+    const confRow = data.events ? (() => {
+      const evs = (data.events||[]).filter(e => e.email === row.email && e.confidenceScore);
+      return evs.length ? parseFloat(evs[evs.length-1].confidenceScore) : null;
+    })() : null;
+    const latestProg = data.events ? (() => {
+      const evs = (data.events||[]).filter(e => e.email === row.email && e.overallProgressPct !== undefined && e.overallProgressPct !== '');
+      return evs.length ? parseFloat(evs[evs.length-1].overallProgressPct) : (prog?.progress ? 0 : 0);
+    })() : 0;
+    const latestMods = data.events ? (() => {
+      const evs = (data.events||[]).filter(e => e.email === row.email && e.modulesCompleted !== undefined && e.modulesCompleted !== '');
+      return evs.length ? parseInt(evs[evs.length-1].modulesCompleted) : 0;
+    })() : 0;
+    return {
+      id: row.learnerId || row.id,
+      name: row.name,
+      email: row.email,
+      company: row.company,
+      firstSeen: row.timestamp,
+      lastActive: row.lastActive,
+      progress: latestProg || 0,
+      modulesCompleted: latestMods || 0,
+      modulesTotal: 5,
+      confidence: confRow,
+      accessStatus: (() => {
+        const v = row.approved;
+        if (v === true || String(v).toUpperCase() === 'TRUE') return 'Given';
+        return 'Pending';
+      })(),
+      approved: row.approved === true || String(row.approved).toUpperCase() === 'TRUE',
+    };
+  });
+  APP.events = data.events || [];
+}
+
+function loadDemo() {
+  APP.learners = MOCK_LEARNERS;
+  APP.isDemo = true;
+  launchDashboard(true);
+}
+
+function launchDashboard(isDemo) {
+  document.getElementById('connect-overlay').style.display = 'none';
+  const app = document.getElementById('main-app');
+  app.classList.add('visible');
+  if (isDemo) {
+    document.getElementById('connection-badge').classList.add('demo');
+    document.getElementById('conn-label').textContent = 'Demo Mode';
+    document.querySelector('.conn-dot').classList.add('demo');
+  }
+  APP.lastUpdated = new Date();
+  document.getElementById('last-updated').textContent = 'Updated ' + APP.lastUpdated.toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit'});
+  applyFilters();
+  populateFilters();
+  renderAll();
+}
+
+async function refreshData() {
+  if (APP.isDemo) { alert('You\'re in demo mode. Connect to live data to refresh.'); return; }
+  const icon = document.getElementById('refresh-icon');
+  icon.classList.add('spin');
+  try {
+    const qs = new URLSearchParams({ action: 'getAdminData', admin_token: APP.adminToken }).toString();
+    const resp = await fetch(`${APP.sheetsUrl}?${qs}`);
+    const data = await resp.json();
+    if (data.status === 'ok') {
+      processLiveData(data);
+      APP.lastUpdated = new Date();
+      document.getElementById('last-updated').textContent = 'Updated ' + APP.lastUpdated.toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit'});
+      applyFilters();
+      renderAll();
+    }
+  } catch(e) {
+    console.error('Refresh failed:', e);
+  }
+  setTimeout(() => icon.classList.remove('spin'), 600);
+}
+
+function disconnectAndReset() {
+  localStorage.removeItem('admin_url');
+  localStorage.removeItem('admin_token');
+  APP = { learners:[], events:[], filtered:[], sortCol:'lastActive', sortDir:'desc', isDemo:false, sheetsUrl:'', adminToken:'', lastUpdated:null };
+  document.getElementById('main-app').classList.remove('visible');
+  document.getElementById('connect-overlay').style.display = 'flex';
+  document.getElementById('connection-badge').classList.remove('demo');
+  document.getElementById('conn-label').textContent = 'Live';
+  document.querySelector('.conn-dot').classList.remove('demo');
+}
+
+// ===== FILTERS =====
+function populateFilters() {
+  const companies = [...new Set(APP.learners.map(l => l.company))].sort();
+  const sel = document.getElementById('filter-company');
+  sel.innerHTML = '<option value="">All Companies</option>';
+  companies.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c; o.textContent = c;
+    sel.appendChild(o);
+  });
+}
+
+function applyFilters() {
+  const search = (document.getElementById('search-input')?.value || '').toLowerCase();
+  const statusF = document.getElementById('filter-status')?.value || '';
+  const companyF = document.getElementById('filter-company')?.value || '';
+  const riskF = document.getElementById('filter-risk')?.value || '';
+  APP.filtered = APP.learners.filter(l => {
+    const status = getStatus(l);
+    if (search && !l.name.toLowerCase().includes(search) && !l.email.toLowerCase().includes(search) && !l.company.toLowerCase().includes(search)) return false;
+    if (statusF && status !== statusF) return false;
+    if (companyF && l.company !== companyF) return false;
+    if (riskF === 'at-risk' && !getAtRisk(l)) return false;
+    if (riskF === 'confidence-gap' && !getConfidenceGap(l)) return false;
+    if (riskF === 'inactive' && daysSinceActive(l) < 7) return false;
+    return true;
+  });
+  sortAndRenderTable();
+}
+
+// ===== SORT =====
+function sortTable(col) {
+  document.querySelectorAll('thead th').forEach(th => th.classList.remove('sort-active'));
+  const cols = ['name','company','status','accessStatus','progress','modules','confidence','lastActive'];
+  const idx = cols.indexOf(col);
+  if (idx >= 0) document.querySelectorAll('thead th')[idx]?.classList.add('sort-active');
+  if (APP.sortCol === col) APP.sortDir = APP.sortDir === 'asc' ? 'desc' : 'asc';
+  else { APP.sortCol = col; APP.sortDir = 'desc'; }
+  sortAndRenderTable();
+}
+
+function sortAndRenderTable() {
+  const col = APP.sortCol, dir = APP.sortDir;
+  APP.filtered.sort((a,b) => {
+    let va, vb;
+    if (col === 'name') { va = a.name; vb = b.name; }
+    else if (col === 'company') { va = a.company; vb = b.company; }
+    else if (col === 'status') { va = getStatus(a); vb = getStatus(b); }
+    else if (col === 'accessStatus') { va = a.accessStatus; vb = b.accessStatus; }
+    else if (col === 'progress') { va = a.progress; vb = b.progress; }
+    else if (col === 'modules') { va = a.modulesCompleted; vb = b.modulesCompleted; }
+    else if (col === 'confidence') { va = a.confidence ?? -1; vb = b.confidence ?? -1; }
+    else { va = new Date(a.lastActive).getTime(); vb = new Date(b.lastActive).getTime(); }
+    if (typeof va === 'string') return dir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+    return dir === 'asc' ? va - vb : vb - va;
+  });
+  renderTable();
+  renderAlerts();
+}
+
+// ===== RENDER ALL =====
+function renderAll() {
+  const m = computeMetrics(APP.learners);
+  renderKPIs(m);
+  renderCharts();
+  applyFilters();
+  renderCompanyGrid();
+}
+
+// ===== KPIs =====
+function renderKPIs(m) {
+  const cards = [
+    { icon:'👥', val: m.total,       label:'Total Learners',    cls:'kpi-purple', change:null },
+    { icon:'⚡', val: m.active,      label:'Active This Week',  cls:'kpi-green', change:null },
+    { icon:'⏳', val: m.pending,     label:'Pending Access',    cls:'kpi-amber', change:null },
+    { icon:'🚫', val: m.declined,    label:'Access Declined',   cls:'kpi-red', change:null },
+    { icon:'🏆', val: m.completed,   label:'Completed',         cls:'kpi-green', change:null },
+    { icon:'📈', val: m.avgProgress+'%', label:'Avg Progress',  cls:'kpi-blue', change:null },
+    { icon:'💡', val: m.avgConf+'/10',   label:'Avg Confidence',cls:'kpi-purple', change:null },
+    { icon:'⚠️', val: m.atRisk,      label:'At Risk',           cls:'kpi-red', change:null },
+  ];
+  document.getElementById('kpi-grid').innerHTML = cards.map(c => `
+    <div class="kpi-card ${c.cls}">
+      <span class="kpi-icon">${c.icon}</span>
+      <div class="kpi-value">${c.val}</div>
+      <div class="kpi-label">${c.label}</div>
+    </div>`).join('');
+}
+
+// ===== CHARTS =====
+function renderCharts() {
+  const learners = APP.learners;
+  const statuses = {
+    'Pending Access': learners.filter(l => !l.approved && l.accessStatus !== 'Declined').length,
+    'Declined': learners.filter(l => l.accessStatus === 'Declined').length,
+    'In Progress': learners.filter(l => l.approved && l.progress > 0 && l.progress < 100 && !getAtRisk(l)).length,
+    'At Risk': learners.filter(l => l.approved && getAtRisk(l) && l.progress < 100).length,
+    'Completed': learners.filter(l => l.progress === 100).length,
+  };
+  const statusColors = {
+    'In Progress': '#5B4BE7',
+    'Completed': '#17B978',
+    'At Risk': '#EF4444',
+    'Pending Access': '#F59E0B',
+    'Declined': '#9CA3AF',
+  };
+  const total = Object.values(statuses).reduce((a,b) => a+b, 0);
+  // Build donut SVG
+  const donutSVG = buildDonut(statuses, statusColors, total);
+  // Progress distribution
+  const progBands = [
+    { label:'0%',    count: learners.filter(l => l.progress === 0).length, color:'#E5E7EB' },
+    { label:'1–24%', count: learners.filter(l => l.progress > 0 && l.progress < 25).length, color:'#EF4444' },
+    { label:'25–49%',count: learners.filter(l => l.progress >= 25 && l.progress < 50).length, color:'#F59E0B' },
+    { label:'50–74%',count: learners.filter(l => l.progress >= 50 && l.progress < 75).length, color:'#3B82F6' },
+    { label:'75–99%',count: learners.filter(l => l.progress >= 75 && l.progress < 100).length, color:'#5B4BE7' },
+    { label:'100%',  count: learners.filter(l => l.progress === 100).length, color:'#17B978' },
+  ];
+  const maxProg = Math.max(...progBands.map(b => b.count), 1);
+  // Confidence distribution
+  const confBands = [
+    { label:'1–3',  count: learners.filter(l => l.confidence !== null && l.confidence >= 1 && l.confidence <= 3).length, color:'#EF4444' },
+    { label:'4–5',  count: learners.filter(l => l.confidence !== null && l.confidence >= 4 && l.confidence <= 5).length, color:'#F59E0B' },
+    { label:'6–7',  count: learners.filter(l => l.confidence !== null && l.confidence >= 6 && l.confidence <= 7).length, color:'#3B82F6' },
+    { label:'8–10', count: learners.filter(l => l.confidence !== null && l.confidence >= 8).length, color:'#17B978' },
+    { label:'N/A',  count: learners.filter(l => l.confidence === null).length, color:'#E5E7EB' },
+  ];
+  const maxConf = Math.max(...confBands.map(b => b.count), 1);
+  // Activity trend (last 14 days)
+  const trendData = buildTrendData(learners);
+  document.getElementById('charts-section').innerHTML = `
+    <div class="chart-card">
+      <div class="chart-title">Status Breakdown</div>
+      <div class="chart-sub">All ${total} learners</div>
+      <div class="donut-wrap">
+        ${donutSVG}
+        <div class="donut-legend">
+          ${Object.entries(statuses).map(([k,v]) => `
+            <div class="legend-item">
+              <div class="legend-dot-label">
+                <div class="legend-dot" style="background:${statusColors[k]}"></div>
+                <span class="legend-label">${k}</span>
+              </div>
+              <span class="legend-val">${v}</span>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Progress Distribution</div>
+      <div class="chart-sub">Percentage completion spread</div>
+      <div class="bar-dist">
+        ${progBands.map(b => `
+          <div class="bar-dist-row">
+            <div class="bar-dist-label">${b.label}</div>
+            <div class="bar-dist-track"><div class="bar-dist-fill" style="background:${b.color};width:${Math.round((b.count/maxProg)*100)}%"></div></div>
+            <div class="bar-dist-count">${b.count}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Confidence Scores</div>
+      <div class="chart-sub">Self-reported confidence (1–10)</div>
+      <div class="bar-dist">
+        ${confBands.map(b => `
+          <div class="bar-dist-row">
+            <div class="bar-dist-label">${b.label}</div>
+            <div class="bar-dist-track"><div class="bar-dist-fill" style="background:${b.color};width:${Math.round((b.count/maxConf)*100)}%"></div></div>
+            <div class="bar-dist-count">${b.count}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Activity Trend</div>
+      <div class="chart-sub">Learners active per day (last 14 days)</div>
+      <div class="line-chart-wrap">${buildLineChart(trendData)}</div>
+    </div>
+  `;
+}
+
+function buildDonut(statuses, colors, total) {
+  const size = 110, cx = 55, cy = 55, r = 40, stroke = 14;
+  const circ = 2 * Math.PI * r;
+  let offset = 0;
+  const entries = Object.entries(statuses).filter(([,v]) => v > 0);
+  let paths = '';
+  entries.forEach(([k, v]) => {
+    const pct = v / (total || 1);
+    const dash = pct * circ;
+    const gap = circ - dash;
+    paths += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${colors[k]}" stroke-width="${stroke}" stroke-dasharray="${dash.toFixed(2)} ${gap.toFixed(2)}" stroke-dashoffset="${(-offset * circ / (total||1)).toFixed(2)}" transform="rotate(-90 ${cx} ${cy})" style="transition:stroke-dasharray 0.8s"/>`;
+    offset -= v;
+  });
+  return `<svg class="donut-svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#EEF0F8" stroke-width="${stroke}"/>
+    ${paths}
+    <text x="${cx}" y="${cy-6}" text-anchor="middle" font-family="DM Sans" font-size="18" font-weight="800" fill="#12152A">${total}</text>
+    <text x="${cx}" y="${cy+12}" text-anchor="middle" font-family="DM Sans" font-size="10" fill="#9AA0C0">learners</text>
+  </svg>`;
+}
+
+function buildTrendData(learners) {
+  const days = 14;
+  const counts = [];
+  for (let i = days-1; i >= 0; i--) {
+    const dayStart = new Date(); dayStart.setDate(dayStart.getDate() - i); dayStart.setHours(0,0,0,0);
+    const dayEnd = new Date(dayStart); dayEnd.setHours(23,59,59,999);
+    const active = learners.filter(l => {
+      const la = new Date(l.lastActive);
+      return la >= dayStart && la <= dayEnd;
+    }).length;
+    counts.push({ day: dayStart.toLocaleDateString('en-GB', {day:'numeric', month:'short'}), count: active });
+  }
+  return counts;
+}
+
+function buildLineChart(data) {
+  const w = 260, h = 80, pad = 20;
+  const max = Math.max(...data.map(d => d.count), 1);
+  const pts = data.map((d,i) => {
+    const x = pad + (i / (data.length-1)) * (w - pad*2);
+    const y = h - pad - (d.count / max) * (h - pad*2);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  const area = data.map((d,i) => {
+    const x = pad + (i / (data.length-1)) * (w - pad*2);
+    const y = h - pad - (d.count / max) * (h - pad*2);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  const areaPath = `M ${area[0]} L ${area.slice(1).join(' L ')} L ${(pad + (data.length-1)/(data.length-1)*(w-pad*2)).toFixed(1)},${h-pad} L ${pad},${h-pad} Z`;
+  // Labels every 3 days
+  const labels = data.filter((_,i) => i % 3 === 0).map((d,i) => {
+    const realIdx = i * 3;
+    const x = pad + (realIdx / (data.length-1)) * (w - pad*2);
+    return `<text x="${x.toFixed(1)}" y="${h}" font-family="DM Sans" font-size="9" fill="#9AA0C0" text-anchor="middle">${d.day}</text>`;
+  }).join('');
+  return `<svg class="line-chart-svg" viewBox="0 0 ${w} ${h+8}" style="overflow:visible">
+    <defs>
+      <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#5B4BE7" stop-opacity="0.15"/>
+        <stop offset="100%" stop-color="#5B4BE7" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <path d="${areaPath}" fill="url(#lineGrad)"/>
+    <polyline points="${pts}" fill="none" stroke="#5B4BE7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    ${data.map((d,i) => {
+      const x = pad + (i / (data.length-1)) * (w - pad*2);
+      const y = h - pad - (d.count / max) * (h - pad*2);
+      return d.count > 0 ? `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="#5B4BE7"/>` : '';
+    }).join('')}
+    ${labels}
+  </svg>`;
+}
+
+// ===== RENDER TABLE =====
+function renderTable() {
+  const tbody = document.getElementById('learner-tbody');
+  const countLabel = document.getElementById('table-count-label');
+  const footerLabel = document.getElementById('table-footer-label');
+  if (!APP.filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="10"><div class="table-empty"><span class="table-empty-icon">🔍</span>No learners match your filters</div></td></tr>`;
+    countLabel.textContent = '';
+    footerLabel.textContent = 'No results';
+    return;
+  }
+  countLabel.textContent = `(${APP.filtered.length} of ${APP.learners.length})`;
+  footerLabel.textContent = `Showing ${APP.filtered.length} learner${APP.filtered.length !== 1 ? 's' : ''}`;
+  tbody.innerHTML = APP.filtered.map(l => {
+    const status = getStatus(l);
+    const action = getRecommendedAction(l);
+    const atRisk = getAtRisk(l);
+    const confGap = getConfidenceGap(l);
+    const risk = atRisk ? '⚠️' : confGap ? '💡' : '—';
+    const riskTitle = atRisk ? 'At risk' : confGap ? 'Confidence gap' : '';
+    const statusBadge = {
+      'In Progress': '<span class="badge badge-blue"><span class="badge-dot"></span>In Progress</span>',
+      'Completed':   '<span class="badge badge-green"><span class="badge-dot"></span>Completed</span>',
+      'At Risk':     '<span class="badge badge-red"><span class="badge-dot"></span>At Risk</span>',
+      'Pending Access':'<span class="badge badge-amber"><span class="badge-dot"></span>Pending</span>',
+      'Declined':    '<span class="badge badge-grey"><span class="badge-dot"></span>Declined</span>',
+    }[status] || `<span class="badge badge-grey">${status}</span>`;
+    const accessBadge = {
+      'Given':   '<span class="badge badge-green">✓ Given</span>',
+      'Pending': '<span class="badge badge-amber">⏳ Pending</span>',
+      'Declined':'<span class="badge badge-red">✕ Declined</span>',
+    }[l.accessStatus] || '';
+    const progPct = l.progress;
+    const progCls = progPct === 100 ? 'done' : progPct < 25 ? 'low' : progPct < 50 ? 'mid' : '';
+    const confStars = l.confidence !== null ? Array.from({length:10}, (_,i) => `<div class="conf-star ${i < l.confidence ? (l.confidence < 4 ? 'low' : 'filled') : ''}"></div>`).join('') : '<span style="font-size:11px;color:var(--text-light)">—</span>';
+    return `<tr onclick="openDrawer('${l.id}')">
+      <td><div class="learner-cell">
+        <div class="learner-avatar" style="background:${COMPANY_COLORS[l.company]||'var(--purple)'}">${initials(l.name)}</div>
+        <div><div class="learner-name">${l.name}</div><div class="learner-email">${l.email}</div></div>
+      </div></td>
+      <td><span class="company-badge">${l.company}</span></td>
+      <td>${statusBadge}</td>
+      <td>${accessBadge}</td>
+      <td><div class="prog-cell"><div class="prog-bar"><div class="prog-fill ${progCls}" style="width:${progPct}%"></div></div><span class="prog-pct">${progPct}%</span></div></td>
+      <td style="font-size:12px;font-weight:600;color:var(--text)">${l.modulesCompleted}/${l.modulesTotal}</td>
+      <td><div class="conf-stars">${confStars}</div></td>
+      <td style="font-size:12px;color:var(--text-muted)">${formatRelative(l.lastActive)}</td>
+      <td><span class="risk-flag" title="${riskTitle}">${risk}</span></td>
+      <td><span class="action-label ${action.cls}">${action.icon} ${action.label}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ===== RENDER ALERTS =====
+function renderAlerts() {
+  const ls = APP.learners;
+  const pendingAccess = ls.filter(l => l.accessStatus === 'Pending');
+  const inactive7 = ls.filter(l => l.approved && daysSinceActive(l) >= 7 && daysSinceActive(l) < 14 && l.progress < 100);
+  const inactive14 = ls.filter(l => l.approved && daysSinceActive(l) >= 14 && l.progress < 100);
+  const confGap = ls.filter(l => l.approved && getConfidenceGap(l));
+  const recentComplete = ls.filter(l => l.progress === 100 && daysSinceActive(l) <= 10);
+  const totalAlerts = pendingAccess.length + inactive14.length + confGap.length;
+  document.getElementById('alerts-count')?.remove();
+  const panel = document.getElementById('alerts-panel');
+  let html = `<div class="alerts-header">
+    <div class="alerts-title">Insights & Alerts</div>
+    ${totalAlerts > 0 ? `<span class="alerts-count">${totalAlerts}</span>` : ''}
+  </div>`;
+  if (pendingAccess.length) {
+    html += `<div class="alert-group"><div class="alert-group-label">🔑 Needs Access (${pendingAccess.length})</div>`;
+    html += pendingAccess.slice(0,4).map(l => `
+      <div class="alert-item" onclick="openDrawer('${l.id}')">
+        <div class="alert-icon">🔑</div>
+        <div class="alert-info"><div class="alert-name">${l.name}</div><div class="alert-detail">${l.company} · Registered ${formatRelative(l.firstSeen)}</div></div>
+        <div class="alert-arrow">›</div>
+      </div>`).join('');
+    html += `</div>`;
+  }
+  if (inactive14.length) {
+    html += `<div class="alert-group"><div class="alert-group-label">🚨 Urgent — Inactive 14+ Days (${inactive14.length})</div>`;
+    html += inactive14.slice(0,4).map(l => `
+      <div class="alert-item" onclick="openDrawer('${l.id}')">
+        <div class="alert-icon">🚨</div>
+        <div class="alert-info"><div class="alert-name">${l.name}</div><div class="alert-detail">${l.progress}% progress · ${daysSinceActive(l)} days inactive</div></div>
+        <div class="alert-arrow">›</div>
+      </div>`).join('');
+    html += `</div>`;
+  }
+  if (inactive7.length) {
+    html += `<div class="alert-group"><div class="alert-group-label">📩 Inactive 7–13 Days (${inactive7.length})</div>`;
+    html += inactive7.slice(0,4).map(l => `
+      <div class="alert-item" onclick="openDrawer('${l.id}')">
+        <div class="alert-icon">📩</div>
+        <div class="alert-info"><div class="alert-name">${l.name}</div><div class="alert-detail">${l.progress}% progress · Last active ${formatRelative(l.lastActive)}</div></div>
+        <div class="alert-arrow">›</div>
+      </div>`).join('');
+    html += `</div>`;
+  }
+  if (confGap.length) {
+    html += `<div class="alert-group"><div class="alert-group-label">💡 Confidence Gap (${confGap.length})</div>`;
+    html += confGap.slice(0,4).map(l => `
+      <div class="alert-item" onclick="openDrawer('${l.id}')">
+        <div class="alert-icon">💡</div>
+        <div class="alert-info"><div class="alert-name">${l.name}</div><div class="alert-detail">${l.progress}% progress but only ${l.confidence}/10 confidence</div></div>
+        <div class="alert-arrow">›</div>
+      </div>`).join('');
+    html += `</div>`;
+  }
+  if (recentComplete.length) {
+    html += `<div class="alert-group"><div class="alert-group-label">🏆 Recently Completed (${recentComplete.length})</div>`;
+    html += recentComplete.slice(0,3).map(l => `
+      <div class="alert-item" onclick="openDrawer('${l.id}')">
+        <div class="alert-icon">🏆</div>
+        <div class="alert-info"><div class="alert-name">${l.name}</div><div class="alert-detail">${l.company} · Confidence ${l.confidence}/10</div></div>
+        <div class="alert-arrow">›</div>
+      </div>`).join('');
+    html += `</div>`;
+  }
+  if (!totalAlerts && !recentComplete.length) {
+    html += `<div class="table-empty"><span class="table-empty-icon">✅</span>All good — no urgent actions needed</div>`;
+  }
+  panel.innerHTML = html;
+}
+
+// ===== COMPANY GRID =====
+function renderCompanyGrid() {
+  const companies = {};
+  APP.learners.forEach(l => {
+    if (!companies[l.company]) companies[l.company] = [];
+    companies[l.company].push(l);
+  });
+  const grid = document.getElementById('company-grid');
+  grid.innerHTML = Object.entries(companies).map(([name, lrns]) => {
+    const total = lrns.length;
+    const completed = lrns.filter(l => l.progress === 100).length;
+    const avgProg = Math.round(lrns.filter(l => l.approved).reduce((s,l) => s+l.progress,0) / (lrns.filter(l=>l.approved).length||1));
+    const atRisk = lrns.filter(getAtRisk).length;
+    const pending = lrns.filter(l => l.accessStatus === 'Pending').length;
+    const avgConf = (() => {
+      const w = lrns.filter(l => l.confidence !== null);
+      return w.length ? (w.reduce((s,l) => s+l.confidence,0)/w.length).toFixed(1) : '—';
+    })();
+    // Health score: 0-100 based on avg progress, completion, low at-risk
+    const health = Math.min(100, Math.round(avgProg * 0.5 + (completed/total)*50 - atRisk*5));
+    const healthColor = health >= 70 ? '#17B978' : health >= 40 ? '#F59E0B' : '#EF4444';
+    const color = COMPANY_COLORS[name] || '#5B4BE7';
+    const initL = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    return `<div class="company-card">
+      <div class="company-card-header">
+        <div class="company-icon" style="background:${color}">${initL}</div>
+        <div>
+          <div class="company-card-title">${name}</div>
+          <div class="company-card-count">${total} learner${total!==1?'s':''}</div>
+        </div>
+      </div>
+      <div class="company-stats">
+        <div class="company-stat"><div class="company-stat-val" style="color:${color}">${avgProg}%</div><div class="company-stat-lbl">Avg Progress</div></div>
+        <div class="company-stat"><div class="company-stat-val" style="color:#17B978">${completed}</div><div class="company-stat-lbl">Completed</div></div>
+        <div class="company-stat"><div class="company-stat-val" style="color:${avgConf !== '—' ? color : 'var(--text-muted)'}">${avgConf}</div><div class="company-stat-lbl">Avg Confidence</div></div>
+        <div class="company-stat"><div class="company-stat-val" style="color:${atRisk > 0 ? '#EF4444' : 'var(--text-muted)'}">${atRisk}</div><div class="company-stat-lbl">At Risk</div></div>
+      </div>
+      <div class="company-health">
+        <div class="health-bar"><div class="health-fill" style="background:${healthColor};width:${health}%"></div></div>
+        <span class="health-label" style="color:${healthColor}">${health >= 70 ? 'Healthy' : health >= 40 ? 'Watch' : 'Needs Help'}</span>
+        <span class="health-score">${health}</span>
+      </div>
+      ${pending > 0 ? `<div style="margin-top:10px"><span class="badge badge-amber"><span class="badge-dot"></span>${pending} pending access</span></div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ===== DRAWER =====
+function openDrawer(learnerId) {
+  const l = APP.learners.find(x => x.id === learnerId);
+  if (!l) return;
+  const status = getStatus(l);
+  const action = getRecommendedAction(l);
+  const confGap = getConfidenceGap(l);
+  const atRisk = getAtRisk(l);
+  const color = COMPANY_COLORS[l.company] || 'var(--purple)';
+  document.getElementById('drawer-avatar').textContent = initials(l.name);
+  document.getElementById('drawer-avatar').style.background = color;
+  document.getElementById('drawer-name').textContent = l.name;
+  document.getElementById('drawer-meta').textContent = `${l.company} · ${l.email}`;
+  // Build module progress (mock distribution)
+  const modProgress = MODULE_NAMES.map((m,i) => {
+    const done = i < l.modulesCompleted;
+    const inProgress = i === l.modulesCompleted && l.progress > 0 && l.progress < 100;
+    let prog = done ? 100 : inProgress ? Math.min(99, (l.progress % 20) * 5) : 0;
+    if (i === l.modulesTotal - 1 && l.progress === 100) prog = 100;
+    return { ...m, done, inProgress, prog };
+  });
+  // Timeline events
+  const timeline = buildTimeline(l);
+  document.getElementById('drawer-body').innerHTML = `
+    <!-- Quick Stats -->
+    <div class="drawer-section">
+      <div class="drawer-section-title">Overview</div>
+      <div class="drawer-stats-grid">
+        <div class="drawer-stat"><div class="drawer-stat-val" style="color:${color}">${l.progress}%</div><div class="drawer-stat-lbl">Overall Progress</div></div>
+        <div class="drawer-stat"><div class="drawer-stat-val" style="color:${l.confidence < 4 ? '#EF4444' : color}">${l.confidence !== null ? l.confidence+'/10' : '—'}</div><div class="drawer-stat-lbl">Confidence</div></div>
+        <div class="drawer-stat"><div class="drawer-stat-val">${l.modulesCompleted}/${l.modulesTotal}</div><div class="drawer-stat-lbl">Modules Done</div></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${statusBadge(status)}
+        ${accessBadge(l.accessStatus)}
+        ${atRisk ? '<span class="badge badge-red">⚠️ At Risk</span>' : ''}
+        ${confGap ? '<span class="badge badge-purple">💡 Confidence Gap</span>' : ''}
+      </div>
+    </div>
+
+    <!-- Key Dates -->
+    <div class="drawer-section">
+      <div class="drawer-section-title">Key Dates</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="background:var(--bg);border-radius:8px;padding:10px 12px">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">First Seen</div>
+          <div style="font-size:13px;font-weight:600">${formatDate(l.firstSeen)}</div>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:10px 12px">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">Last Active</div>
+          <div style="font-size:13px;font-weight:600;color:${daysSinceActive(l) > 7 ? '#EF4444' : 'var(--text)'}">${formatDate(l.lastActive)} (${formatRelative(l.lastActive)})</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Module Progress -->
+    <div class="drawer-section">
+      <div class="drawer-section-title">Module Progress</div>
+      <div class="drawer-module-list">
+        ${modProgress.map((m,i) => `
+          <div class="drawer-module">
+            <div class="drawer-module-icon">${m.done ? '✅' : m.inProgress ? '⏳' : '⬜'}</div>
+            <div class="drawer-module-info">
+              <div class="drawer-module-title">${m.icon} ${m.title}</div>
+              <div class="drawer-module-sub">Module ${i+1} · ${m.done ? 'Completed' : m.inProgress ? 'In progress' : 'Not started'}</div>
+            </div>
+            <div class="drawer-module-prog" style="color:${m.done ? '#17B978' : m.inProgress ? '#5B4BE7' : 'var(--text-light)'}">${m.prog}%</div>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- Recommended Action -->
+    <div class="drawer-section">
+      <div class="drawer-section-title">Recommended Action</div>
+      <div style="background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border);padding:14px 16px;margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:22px">${action.icon}</span>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--text)">${action.label}</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${actionDesc(action.label, l)}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="drawer-section">
+      <div class="drawer-section-title">Activity Timeline</div>
+      <div class="timeline">
+        ${timeline}
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="drawer-section">
+      <div class="drawer-section-title">Trainer Notes</div>
+      <textarea class="drawer-notes" placeholder="Add notes about this learner…" id="drawer-notes-${l.id}"></textarea>
+      <div class="drawer-action-row">
+        <button class="drawer-action-btn dab-primary" onclick="saveNote('${l.id}')">💾 Save Note</button>
+        <button class="drawer-action-btn dab-ghost" onclick="copyEmail('${l.email}')">📋 Copy Email</button>
+      </div>
+    </div>
+  `;
+  // Restore saved note
+  const saved = localStorage.getItem('note_' + l.id);
+  if (saved) document.getElementById('drawer-notes-'+l.id).value = saved;
+  document.getElementById('drawer-overlay').classList.add('open');
+  document.getElementById('side-drawer').classList.add('open');
+}
+
+function buildTimeline(l) {
+  const events = [];
+  events.push({ icon:'👤', text:'Registered on simulator', time: formatDate(l.firstSeen), active: true });
+  if (l.accessStatus === 'Given') events.push({ icon:'🔑', text:'Access granted', time: formatDate(new Date(new Date(l.firstSeen).getTime() + 86400000*2).toISOString()), active: true });
+  if (l.accessStatus === 'Declined') events.push({ icon:'🚫', text:'Access declined', time: formatDate(l.firstSeen), active: false });
+  if (l.modulesCompleted >= 1) events.push({ icon:'📚', text:'Completed Module 1', time: formatDate(new Date(new Date(l.firstSeen).getTime() + 86400000*3).toISOString()), active: true });
+  if (l.modulesCompleted >= 2) events.push({ icon:'📚', text:'Completed Module 2', time: formatDate(new Date(new Date(l.firstSeen).getTime() + 86400000*7).toISOString()), active: true });
+  if (l.modulesCompleted >= 3) events.push({ icon:'📚', text:'Completed Module 3', time: formatDate(new Date(new Date(l.firstSeen).getTime() + 86400000*12).toISOString()), active: true });
+  if (l.confidence !== null) events.push({ icon:'💡', text:`Submitted confidence score: ${l.confidence}/10`, time: formatDate(l.lastActive), active: true });
+  if (l.progress === 100) events.push({ icon:'🏆', text:'Completed all modules!', time: formatDate(l.lastActive), active: true });
+  events.push({ icon:'⏰', text:'Last active', time: `${formatDate(l.lastActive)} (${formatRelative(l.lastActive)})`, active: daysSinceActive(l) <= 3 });
+  return events.map((ev,i) => `
+    <div class="timeline-item">
+      <div class="timeline-left">
+        <div class="timeline-dot ${ev.active ? '' : 'grey'}"></div>
+        ${i < events.length-1 ? '<div class="timeline-line"></div>' : ''}
+      </div>
+      <div class="timeline-content">
+        <div class="timeline-event">${ev.icon} ${ev.text}</div>
+        <div class="timeline-time">${ev.time}</div>
+      </div>
+    </div>`).join('');
+}
+
+function actionDesc(label, l) {
+  const descs = {
+    'Grant Access': `${l.name} registered and is waiting for access approval.`,
+    'Access Declined': `Access was declined. Contact ${l.name} if this was an error.`,
+    'Certificate Ready': `${l.name} has completed all modules. Issue completion certificate.`,
+    'Review Confidence Gap': `High progress (${l.progress}%) but low confidence (${l.confidence}/10). Consider a refresher session.`,
+    'Urgent Intervention': `${l.name} has been inactive for ${daysSinceActive(l)} days. Trainer contact recommended.`,
+    'Send Reminder': `${l.name} hasn't been active for ${daysSinceActive(l)} days. Send a gentle nudge.`,
+    'Chase Progress': `${l.name} has only completed ${l.progress}% — encourage them to pick up pace.`,
+    'Ready to Complete': `${l.name} is at ${l.progress}%. One final push to completion.`,
+    'No Action Needed': `${l.name} is progressing well. Keep monitoring.`,
+  };
+  return descs[label] || '';
+}
+
+function statusBadge(s) {
+  const map = {
+    'In Progress': 'badge-blue', 'Completed':'badge-green',
+    'At Risk':'badge-red', 'Pending Access':'badge-amber', 'Declined':'badge-grey'
+  };
+  return `<span class="badge ${map[s]||'badge-grey'}"><span class="badge-dot"></span>${s}</span>`;
+}
+function accessBadge(s) {
+  const map = { 'Given':'badge-green', 'Pending':'badge-amber', 'Declined':'badge-red' };
+  return `<span class="badge ${map[s]||'badge-grey'}">Access: ${s}</span>`;
+}
+
+function closeDrawer() {
+  document.getElementById('drawer-overlay').classList.remove('open');
+  document.getElementById('side-drawer').classList.remove('open');
+}
+
+function saveNote(id) {
+  const el = document.getElementById('drawer-notes-'+id);
+  if (el) { localStorage.setItem('note_'+id, el.value); el.style.borderColor = 'var(--success)'; setTimeout(() => el.style.borderColor = '', 1500); }
+}
+function copyEmail(email) {
+  navigator.clipboard.writeText(email).then(() => { alert('Email copied: ' + email); }).catch(() => {});
+}
+
+// ===== VIEW SWITCHER =====
+function switchView(view, btn) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-'+view)?.classList.add('active');
+  btn.classList.add('active');
+}
+
+// ===== EXPORT CSV =====
+function exportCSV() {
+  const headers = ['Name','Email','Company','Status','Access','Progress%','Modules','Confidence','First Seen','Last Active','At Risk','Action'];
+  const rows = APP.learners.map(l => [
+    l.name, l.email, l.company, getStatus(l), l.accessStatus, l.progress,
+    `${l.modulesCompleted}/${l.modulesTotal}`,
+    l.confidence !== null ? l.confidence : '',
+    formatDate(l.firstSeen), formatDate(l.lastActive),
+    getAtRisk(l) ? 'Yes' : 'No',
+    getRecommendedAction(l).label
+  ]);
+  const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  a.download = `learners_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+}
+
+// ===== AUTO-RESTORE SAVED CONNECTION =====
+window.addEventListener('DOMContentLoaded', () => {
+  const savedUrl = localStorage.getItem('admin_url');
+  const savedToken = localStorage.getItem('admin_token');
+  if (savedUrl && savedToken) {
+    document.getElementById('cfg-url').value = savedUrl;
+    document.getElementById('cfg-token').value = savedToken;
+  }
+});
+</script>
+</body>
+</html>
