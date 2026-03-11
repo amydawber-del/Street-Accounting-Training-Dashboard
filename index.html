@@ -807,6 +807,220 @@ td {
 /* ===== VIEWS ===== */
 .view { display: none; }
 .view.active { display: block; }
+
+/* ===== KPI CLICKABLE ===== */
+.kpi-card { cursor: pointer; position: relative; }
+.kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.kpi-card::after {
+  content: '↗';
+  position: absolute; top: 10px; right: 12px;
+  font-size: 11px; color: rgba(255,255,255,0.35);
+  transition: var(--transition);
+}
+.kpi-card:hover::after { color: rgba(255,255,255,0.7); }
+
+/* ===== GENERIC MODAL ===== */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(18,21,42,0.55);
+  backdrop-filter: blur(4px);
+  z-index: 700;
+  display: none; opacity: 0;
+  transition: opacity 0.2s;
+  align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; opacity: 1; }
+.modal-box {
+  background: var(--white);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  width: 680px; max-width: 96vw;
+  max-height: 88vh;
+  display: flex; flex-direction: column;
+  animation: fadeUp 0.25s ease both;
+  overflow: hidden;
+}
+.modal-box.modal-wide { width: 820px; }
+.modal-header {
+  padding: 20px 24px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: flex-start; gap: 14px;
+  background: var(--navy); flex-shrink: 0;
+}
+.modal-header-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: rgba(255,255,255,0.1);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.modal-header-info { flex: 1; }
+.modal-title { font-size: 16px; font-weight: 800; color: white; }
+.modal-subtitle { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 2px; }
+.modal-close {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: rgba(255,255,255,0.1); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(255,255,255,0.6); font-size: 16px;
+  transition: var(--transition); flex-shrink: 0;
+}
+.modal-close:hover { background: rgba(255,255,255,0.2); color: white; }
+.modal-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
+.modal-footer {
+  padding: 14px 24px;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0; background: var(--bg);
+}
+.modal-footer-note { font-size: 12px; color: var(--text-muted); }
+
+/* modal learner list */
+.modal-learner-list { display: flex; flex-direction: column; gap: 8px; }
+.modal-learner-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg); border-radius: 10px;
+  border: 1px solid var(--border-light);
+  transition: var(--transition);
+}
+.modal-learner-row:hover { border-color: #c4c8e0; background: #f7f8fd; }
+.modal-learner-avatar {
+  width: 36px; height: 36px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 800; color: white; flex-shrink: 0;
+}
+.modal-learner-info { flex: 1; min-width: 0; }
+.modal-learner-name { font-size: 13px; font-weight: 700; color: var(--text); }
+.modal-learner-meta { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.modal-learner-actions { display: flex; gap: 6px; align-items: center; }
+.access-btn {
+  padding: 6px 13px; border-radius: 6px; border: none;
+  font-family: inherit; font-size: 12px; font-weight: 600;
+  cursor: pointer; transition: var(--transition); white-space: nowrap;
+}
+.access-btn-approve {
+  background: rgba(23,185,120,0.12); color: #17B978;
+  border: 1.5px solid rgba(23,185,120,0.3);
+}
+.access-btn-approve:hover { background: #17B978; color: white; }
+.access-btn-decline {
+  background: rgba(239,68,68,0.08); color: #EF4444;
+  border: 1.5px solid rgba(239,68,68,0.2);
+}
+.access-btn-decline:hover { background: #EF4444; color: white; }
+.access-btn-revoke {
+  background: rgba(245,158,11,0.1); color: #F59E0B;
+  border: 1.5px solid rgba(245,158,11,0.25);
+}
+.access-btn-revoke:hover { background: #F59E0B; color: white; }
+.access-btn:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+
+/* modal stat row */
+.modal-stat-row {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+  margin-bottom: 20px;
+}
+.modal-stat-card {
+  background: var(--bg); border-radius: 10px;
+  border: 1px solid var(--border-light);
+  padding: 14px; text-align: center;
+}
+.modal-stat-val { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+.modal-stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+/* ===== CONFIDENCE INFO PILL ===== */
+.conf-info-pill {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 15px; height: 15px;
+  border-radius: 50%;
+  background: var(--purple-glow);
+  color: var(--purple);
+  font-size: 9px; font-weight: 800;
+  cursor: help; margin-left: 4px;
+  border: 1px solid rgba(91,75,231,0.25);
+  position: relative;
+  vertical-align: middle;
+}
+.conf-info-pill .conf-tooltip {
+  position: absolute; bottom: calc(100% + 8px); left: 50%;
+  transform: translateX(-50%);
+  background: var(--navy);
+  color: rgba(255,255,255,0.9);
+  border-radius: 10px;
+  padding: 12px 14px;
+  width: 260px;
+  font-size: 11px; line-height: 1.6;
+  font-weight: 400; text-transform: none; letter-spacing: 0;
+  box-shadow: var(--shadow-lg);
+  pointer-events: none;
+  opacity: 0; transition: opacity 0.18s;
+  z-index: 999;
+  white-space: normal;
+  border: 1px solid rgba(255,255,255,0.07);
+}
+.conf-info-pill .conf-tooltip::after {
+  content: '';
+  position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--navy);
+}
+.conf-info-pill:hover .conf-tooltip { opacity: 1; }
+.conf-tooltip-title { font-weight: 700; font-size: 12px; color: white; margin-bottom: 6px; }
+.conf-tooltip-row { display: flex; align-items: flex-start; gap: 6px; margin-top: 4px; }
+.conf-tooltip-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 4px;
+}
+
+/* ===== ACCESS BUTTONS IN DRAWER ===== */
+.drawer-access-bar {
+  display: flex; gap: 8px; margin-top: 14px;
+  padding: 14px; background: var(--bg);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+  align-items: center; flex-wrap: wrap;
+}
+.drawer-access-bar-label { font-size: 11px; color: var(--text-muted); font-weight: 600; flex: 1; }
+.drawer-access-btn {
+  padding: 8px 16px; border-radius: 7px; border: none;
+  font-family: inherit; font-size: 12px; font-weight: 700;
+  cursor: pointer; transition: var(--transition);
+}
+.dab-approve { background: #17B978; color: white; }
+.dab-approve:hover { background: #13a167; }
+.dab-decline-access { background: var(--danger-bg); color: var(--danger); border: 1.5px solid rgba(239,68,68,0.25); }
+.dab-decline-access:hover { background: var(--danger); color: white; }
+
+/* ===== COMPANY CLICKABLE IN TABLE ===== */
+.company-badge { cursor: pointer; transition: var(--transition); }
+.company-badge:hover { background: rgba(91,75,231,0.12); color: var(--purple); border-color: rgba(91,75,231,0.3); }
+.company-card { cursor: pointer; }
+
+/* ===== COMPANY MODAL LEARNER TABLE ===== */
+.company-modal-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.company-modal-table th {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.6px; color: var(--text-muted);
+  padding: 8px 10px; text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.company-modal-table td { padding: 10px 10px; border-bottom: 1px solid var(--border-light); vertical-align: middle; }
+.company-modal-table tr:hover td { background: var(--bg); }
+.company-modal-table tr:last-child td { border-bottom: none; }
+
+/* toast */
+.toast {
+  position: fixed; bottom: 28px; right: 28px;
+  background: var(--navy); color: white;
+  padding: 12px 18px; border-radius: 10px;
+  font-size: 13px; font-weight: 600;
+  box-shadow: var(--shadow-lg);
+  z-index: 9999; opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.25s;
+  pointer-events: none;
+  border-left: 3px solid var(--purple);
+}
+.toast.show { opacity: 1; transform: translateY(0); }
 </style>
 </head>
 <body>
@@ -924,7 +1138,7 @@ td {
                 <th onclick="sortTable('accessStatus')">Access <span class="sort-arrow">↕</span></th>
                 <th onclick="sortTable('progress')">Progress <span class="sort-arrow">↕</span></th>
                 <th onclick="sortTable('modules')">Modules <span class="sort-arrow">↕</span></th>
-                <th onclick="sortTable('confidence')">Confidence <span class="sort-arrow">↕</span></th>
+                <th onclick="sortTable('confidence')">Confidence <span class="conf-info-pill">i<span class="conf-tooltip"><div class="conf-tooltip-title">What is the Confidence Score?</div>A self-reported score (1–10) submitted by the learner at the end of the simulator. It reflects how confident they feel applying Street accounting workflows in real client situations.<div class="conf-tooltip-row"><div class="conf-tooltip-dot" style="background:#EF4444"></div><span>1–3 · Low — needs follow-up or refresher</span></div><div class="conf-tooltip-row"><div class="conf-tooltip-dot" style="background:#F59E0B"></div><span>4–6 · Building — progressing but uncertain</span></div><div class="conf-tooltip-row"><div class="conf-tooltip-dot" style="background:#17B978"></div><span>7–10 · Strong — ready to apply skills</span></div><div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.1);font-size:10px;color:rgba(255,255,255,0.4)">A high progress % with a low confidence score flags a "confidence gap" — the learner has completed the modules but still lacks certainty.</div></span></span> <span class="sort-arrow">↕</span></th>
                 <th onclick="sortTable('lastActive')">Last Active <span class="sort-arrow">↕</span></th>
                 <th>Risk</th>
                 <th>Action</th>
@@ -950,6 +1164,43 @@ td {
   </div>
 
 </div>
+
+<!-- ===== KPI MODAL ===== -->
+<div class="modal-overlay" id="kpi-modal-overlay" onclick="closeKPIModal(event)">
+  <div class="modal-box" id="kpi-modal-box">
+    <div class="modal-header">
+      <div class="modal-header-icon" id="kpi-modal-icon">📋</div>
+      <div class="modal-header-info">
+        <div class="modal-title" id="kpi-modal-title">Learners</div>
+        <div class="modal-subtitle" id="kpi-modal-subtitle"></div>
+      </div>
+      <button class="modal-close" onclick="closeKPIModal()">✕</button>
+    </div>
+    <div class="modal-body" id="kpi-modal-body"></div>
+    <div class="modal-footer">
+      <span class="modal-footer-note" id="kpi-modal-footer-note"></span>
+      <button class="access-btn access-btn-approve" id="kpi-modal-approve-all" style="display:none" onclick="approveAllPending()">✓ Approve All Pending</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== COMPANY MODAL ===== -->
+<div class="modal-overlay" id="company-modal-overlay" onclick="closeCompanyModal(event)">
+  <div class="modal-box modal-wide" id="company-modal-box">
+    <div class="modal-header">
+      <div class="modal-header-icon" id="company-modal-icon" style="font-size:20px;font-weight:800;color:white"></div>
+      <div class="modal-header-info">
+        <div class="modal-title" id="company-modal-title"></div>
+        <div class="modal-subtitle" id="company-modal-subtitle"></div>
+      </div>
+      <button class="modal-close" onclick="closeCompanyModal()">✕</button>
+    </div>
+    <div class="modal-body" id="company-modal-body"></div>
+  </div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div class="toast" id="toast"></div>
 
 <!-- ===== SIDE DRAWER ===== -->
 <div id="drawer-overlay" onclick="closeDrawer()"></div>
@@ -1123,30 +1374,39 @@ async function connectLive() {
 
 function processLiveData(data) {
   APP.learners = (data.learners || []).map(row => {
-    const prog = row.progressJson ? (() => { try { return JSON.parse(row.progressJson); } catch(e){ return null; }})() : null;
-    const confRow = data.events ? (() => {
-      const evs = (data.events||[]).filter(e => e.email === row.email && e.confidenceScore);
+    // Derive confidence: prefer direct value from Learner Summary, fall back to last event
+    const confFromEvents = data.events ? (() => {
+      const evs = (data.events||[]).filter(e => e.email === row.email && e.confidenceScore && e.confidenceScore !== '');
       return evs.length ? parseFloat(evs[evs.length-1].confidenceScore) : null;
     })() : null;
-    const latestProg = data.events ? (() => {
+    const confidence = (row.confidence !== null && row.confidence !== undefined && row.confidence !== '')
+      ? Number(row.confidence) : confFromEvents;
+
+    // Derive progress: prefer direct value from Learner Summary, fall back to last event
+    const progFromEvents = data.events ? (() => {
       const evs = (data.events||[]).filter(e => e.email === row.email && e.overallProgressPct !== undefined && e.overallProgressPct !== '');
-      return evs.length ? parseFloat(evs[evs.length-1].overallProgressPct) : (prog?.progress ? 0 : 0);
+      return evs.length ? parseFloat(evs[evs.length-1].overallProgressPct) : 0;
     })() : 0;
-    const latestMods = data.events ? (() => {
+    const progress = (row.progress !== null && row.progress !== undefined) ? Number(row.progress) : progFromEvents;
+
+    // Derive modulesCompleted: prefer direct value from Learner Summary, fall back to last event
+    const modsFromEvents = data.events ? (() => {
       const evs = (data.events||[]).filter(e => e.email === row.email && e.modulesCompleted !== undefined && e.modulesCompleted !== '');
       return evs.length ? parseInt(evs[evs.length-1].modulesCompleted) : 0;
     })() : 0;
+    const modulesCompleted = (row.modulesCompleted !== null && row.modulesCompleted !== undefined) ? Number(row.modulesCompleted) : modsFromEvents;
+
     return {
       id: row.learnerId || row.id,
       name: row.name,
       email: row.email,
       company: row.company,
-      firstSeen: row.timestamp,
+      firstSeen: row.firstSeen || row.timestamp || '',   // FIX: was row.timestamp only
       lastActive: row.lastActive,
-      progress: latestProg || 0,
-      modulesCompleted: latestMods || 0,
-      modulesTotal: 5,
-      confidence: confRow,
+      progress: progress || 0,
+      modulesCompleted: modulesCompleted || 0,
+      modulesTotal: Number(row.modulesTotal) || 5,        // FIX: was hardcoded 5
+      confidence: confidence,
       accessStatus: (() => {
         const v = row.approved;
         if (v === true || String(v).toUpperCase() === 'TRUE') return 'Given';
@@ -1156,6 +1416,8 @@ function processLiveData(data) {
     };
   });
   APP.events = data.events || [];
+  // Store module-level progress from Module Progress sheet (if Apps Script returns it)
+  APP.moduleProgress = data.moduleProgress || [];
 }
 
 function loadDemo() {
@@ -1287,17 +1549,17 @@ function renderAll() {
 // ===== KPIs =====
 function renderKPIs(m) {
   const cards = [
-    { icon:'👥', val: m.total,       label:'Total Learners',    cls:'kpi-purple', change:null },
-    { icon:'⚡', val: m.active,      label:'Active This Week',  cls:'kpi-green', change:null },
-    { icon:'⏳', val: m.pending,     label:'Pending Access',    cls:'kpi-amber', change:null },
-    { icon:'🚫', val: m.declined,    label:'Access Declined',   cls:'kpi-red', change:null },
-    { icon:'🏆', val: m.completed,   label:'Completed',         cls:'kpi-green', change:null },
-    { icon:'📈', val: m.avgProgress+'%', label:'Avg Progress',  cls:'kpi-blue', change:null },
-    { icon:'💡', val: m.avgConf+'/10',   label:'Avg Confidence',cls:'kpi-purple', change:null },
-    { icon:'⚠️', val: m.atRisk,      label:'At Risk',           cls:'kpi-red', change:null },
+    { icon:'👥', val: m.total,       label:'Total Learners',    cls:'kpi-purple', key:'total' },
+    { icon:'⚡', val: m.active,      label:'Active This Week',  cls:'kpi-green',  key:'active' },
+    { icon:'⏳', val: m.pending,     label:'Pending Access',    cls:'kpi-amber',  key:'pending' },
+    { icon:'🚫', val: m.declined,    label:'Access Declined',   cls:'kpi-red',    key:'declined' },
+    { icon:'🏆', val: m.completed,   label:'Completed',         cls:'kpi-green',  key:'completed' },
+    { icon:'📈', val: m.avgProgress+'%', label:'Avg Progress',  cls:'kpi-blue',   key:'avgProgress' },
+    { icon:'💡', val: m.avgConf+'/10',   label:'Avg Confidence',cls:'kpi-purple', key:'avgConf' },
+    { icon:'⚠️', val: m.atRisk,      label:'At Risk',           cls:'kpi-red',    key:'atRisk' },
   ];
   document.getElementById('kpi-grid').innerHTML = cards.map(c => `
-    <div class="kpi-card ${c.cls}">
+    <div class="kpi-card ${c.cls}" onclick="openKPIModal('${c.key}')">
       <span class="kpi-icon">${c.icon}</span>
       <div class="kpi-value">${c.val}</div>
       <div class="kpi-label">${c.label}</div>
@@ -1507,9 +1769,9 @@ function renderTable() {
     return `<tr onclick="openDrawer('${l.id}')">
       <td><div class="learner-cell">
         <div class="learner-avatar" style="background:${COMPANY_COLORS[l.company]||'var(--purple)'}">${initials(l.name)}</div>
-        <div><div class="learner-name">${l.name}</div><div class="learner-email">${l.email}</div></div>
+        <div><div class="learner-name" style="cursor:pointer;color:var(--purple)" onclick="event.stopPropagation();openDrawer('${l.id}')" title="View learner profile">${l.name}</div><div class="learner-email">${l.email}</div></div>
       </div></td>
-      <td><span class="company-badge">${l.company}</span></td>
+      <td><span class="company-badge" onclick="event.stopPropagation();openCompanyModal('${l.company}')">${l.company}</span></td>
       <td>${statusBadge}</td>
       <td>${accessBadge}</td>
       <td><div class="prog-cell"><div class="prog-bar"><div class="prog-fill ${progCls}" style="width:${progPct}%"></div></div><span class="prog-pct">${progPct}%</span></div></td>
@@ -1616,7 +1878,7 @@ function renderCompanyGrid() {
     const healthColor = health >= 70 ? '#17B978' : health >= 40 ? '#F59E0B' : '#EF4444';
     const color = COMPANY_COLORS[name] || '#5B4BE7';
     const initL = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-    return `<div class="company-card">
+    return `<div class="company-card" onclick="openCompanyModal('${name}')">
       <div class="company-card-header">
         <div class="company-icon" style="background:${color}">${initL}</div>
         <div>
@@ -1653,13 +1915,31 @@ function openDrawer(learnerId) {
   document.getElementById('drawer-avatar').style.background = color;
   document.getElementById('drawer-name').textContent = l.name;
   document.getElementById('drawer-meta').textContent = `${l.company} · ${l.email}`;
-  // Build module progress (mock distribution)
-  const modProgress = MODULE_NAMES.map((m,i) => {
+  // Build module progress — use real Module Progress sheet data when available, else estimate
+  const realModData = (APP.moduleProgress || []).filter(m => m.userId === l.id || m.email === l.email);
+  const modProgress = MODULE_NAMES.map((m, i) => {
+    const modId = 'module_' + (i + 1);
+    const real = realModData.find(r => r.moduleId === modId || r.moduleTitle === m.title);
+    if (real) {
+      const tasksDone = Number(real.tasksDone || 0);
+      const tasksTotal = Number(real.tasksTotal || 1);
+      const prog = real.scenarioComplete === 'true' || real.scenarioComplete === true ? 100
+        : tasksTotal > 0 ? Math.round((tasksDone / tasksTotal) * 100) : 0;
+      const done = prog === 100;
+      const inProgress = prog > 0 && prog < 100;
+      return { ...m, done, inProgress, prog,
+        kcScore: real.kcScore || '',
+        tasksDone, tasksTotal,
+        reflDone: Number(real.reflectionsDone || 0),
+        reflTotal: Number(real.reflectionsTotal || 0),
+        hasReal: true };
+    }
+    // Fallback: estimate from overall progress
     const done = i < l.modulesCompleted;
     const inProgress = i === l.modulesCompleted && l.progress > 0 && l.progress < 100;
     let prog = done ? 100 : inProgress ? Math.min(99, (l.progress % 20) * 5) : 0;
     if (i === l.modulesTotal - 1 && l.progress === 100) prog = 100;
-    return { ...m, done, inProgress, prog };
+    return { ...m, done, inProgress, prog, hasReal: false };
   });
   // Timeline events
   const timeline = buildTimeline(l);
@@ -1677,6 +1957,19 @@ function openDrawer(learnerId) {
         ${accessBadge(l.accessStatus)}
         ${atRisk ? '<span class="badge badge-red">⚠️ At Risk</span>' : ''}
         ${confGap ? '<span class="badge badge-purple">💡 Confidence Gap</span>' : ''}
+      </div>
+      <div class="drawer-access-bar">
+        <div class="drawer-access-bar-label">🔑 Learner Access</div>
+        ${l.accessStatus === 'Pending' ? `
+          <button class="drawer-access-btn dab-approve" onclick="updateAccess('${l.id}','${l.email}',true)">✓ Grant Access</button>
+          <button class="drawer-access-btn dab-decline-access" onclick="updateAccess('${l.id}','${l.email}',false)">✕ Decline</button>
+        ` : l.approved ? `
+          <span class="badge badge-green" style="margin-right:auto">✓ Access Given</span>
+          <button class="drawer-access-btn dab-decline-access" onclick="updateAccess('${l.id}','${l.email}',false)">Revoke Access</button>
+        ` : `
+          <span class="badge badge-red" style="margin-right:auto">✕ Access Declined</span>
+          <button class="drawer-access-btn dab-approve" onclick="updateAccess('${l.id}','${l.email}',true)">Re-grant Access</button>
+        `}
       </div>
     </div>
 
@@ -1704,7 +1997,7 @@ function openDrawer(learnerId) {
             <div class="drawer-module-icon">${m.done ? '✅' : m.inProgress ? '⏳' : '⬜'}</div>
             <div class="drawer-module-info">
               <div class="drawer-module-title">${m.icon} ${m.title}</div>
-              <div class="drawer-module-sub">Module ${i+1} · ${m.done ? 'Completed' : m.inProgress ? 'In progress' : 'Not started'}</div>
+              <div class="drawer-module-sub">Module ${i+1} · ${m.done ? 'Completed' : m.inProgress ? 'In progress' : 'Not started'}${m.hasReal && m.tasksTotal ? ` · Tasks ${m.tasksDone}/${m.tasksTotal}` : ''}${m.hasReal && m.kcScore !== '' ? ` · KC: ${m.kcScore}` : ''}</div>
             </div>
             <div class="drawer-module-prog" style="color:${m.done ? '#17B978' : m.inProgress ? '#5B4BE7' : 'var(--text-light)'}">${m.prog}%</div>
           </div>`).join('')}
@@ -1752,15 +2045,35 @@ function openDrawer(learnerId) {
 
 function buildTimeline(l) {
   const events = [];
-  events.push({ icon:'👤', text:'Registered on simulator', time: formatDate(l.firstSeen), active: true });
-  if (l.accessStatus === 'Given') events.push({ icon:'🔑', text:'Access granted', time: formatDate(new Date(new Date(l.firstSeen).getTime() + 86400000*2).toISOString()), active: true });
-  if (l.accessStatus === 'Declined') events.push({ icon:'🚫', text:'Access declined', time: formatDate(l.firstSeen), active: false });
-  if (l.modulesCompleted >= 1) events.push({ icon:'📚', text:'Completed Module 1', time: formatDate(new Date(new Date(l.firstSeen).getTime() + 86400000*3).toISOString()), active: true });
-  if (l.modulesCompleted >= 2) events.push({ icon:'📚', text:'Completed Module 2', time: formatDate(new Date(new Date(l.firstSeen).getTime() + 86400000*7).toISOString()), active: true });
-  if (l.modulesCompleted >= 3) events.push({ icon:'📚', text:'Completed Module 3', time: formatDate(new Date(new Date(l.firstSeen).getTime() + 86400000*12).toISOString()), active: true });
-  if (l.confidence !== null) events.push({ icon:'💡', text:`Submitted confidence score: ${l.confidence}/10`, time: formatDate(l.lastActive), active: true });
-  if (l.progress === 100) events.push({ icon:'🏆', text:'Completed all modules!', time: formatDate(l.lastActive), active: true });
-  events.push({ icon:'⏰', text:'Last active', time: `${formatDate(l.lastActive)} (${formatRelative(l.lastActive)})`, active: daysSinceActive(l) <= 3 });
+  // Use real events from Raw Events sheet if available
+  const realEvents = (APP.events || []).filter(e => e.email === l.email);
+  if (realEvents.length > 0) {
+    events.push({ icon:'👤', text:'Registered on simulator', time: formatDate(l.firstSeen), active: true });
+    if (l.approved) events.push({ icon:'🔑', text:'Access granted', time: formatDate(l.firstSeen), active: true });
+    // Pull unique module completions from real event data
+    const seenMods = new Set();
+    realEvents.forEach(ev => {
+      if (ev.moduleTitle && !seenMods.has(ev.moduleTitle)) {
+        seenMods.add(ev.moduleTitle);
+        events.push({ icon:'📚', text:`Started: ${ev.moduleTitle}`, time: formatDate(ev.timestamp || l.firstSeen), active: true });
+      }
+    });
+    const lastConfEv = [...realEvents].reverse().find(e => e.confidenceScore && e.confidenceScore !== '');
+    if (lastConfEv) events.push({ icon:'💡', text:`Confidence score submitted: ${lastConfEv.confidenceScore}/10`, time: formatDate(lastConfEv.timestamp || l.lastActive), active: true });
+    if (l.progress === 100) events.push({ icon:'🏆', text:'Completed all modules!', time: formatDate(l.lastActive), active: true });
+    events.push({ icon:'⏰', text:'Last active', time: `${formatDate(l.lastActive)} (${formatRelative(l.lastActive)})`, active: daysSinceActive(l) <= 3 });
+  } else {
+    // Fallback: estimated timeline
+    events.push({ icon:'👤', text:'Registered on simulator', time: formatDate(l.firstSeen), active: true });
+    if (l.accessStatus === 'Given') events.push({ icon:'🔑', text:'Access granted', time: formatDate(new Date(new Date(l.firstSeen).getTime() + 86400000*2).toISOString()), active: true });
+    if (l.accessStatus === 'Declined') events.push({ icon:'🚫', text:'Access declined', time: formatDate(l.firstSeen), active: false });
+    if (l.modulesCompleted >= 1) events.push({ icon:'📚', text:'Completed Module 1', time: formatDate(new Date(new Date(l.firstSeen).getTime() + 86400000*3).toISOString()), active: true });
+    if (l.modulesCompleted >= 2) events.push({ icon:'📚', text:'Completed Module 2', time: formatDate(new Date(new Date(l.firstSeen).getTime() + 86400000*7).toISOString()), active: true });
+    if (l.modulesCompleted >= 3) events.push({ icon:'📚', text:'Completed Module 3', time: formatDate(new Date(new Date(l.firstSeen).getTime() + 86400000*12).toISOString()), active: true });
+    if (l.confidence !== null) events.push({ icon:'💡', text:`Submitted confidence score: ${l.confidence}/10`, time: formatDate(l.lastActive), active: true });
+    if (l.progress === 100) events.push({ icon:'🏆', text:'Completed all modules!', time: formatDate(l.lastActive), active: true });
+    events.push({ icon:'⏰', text:'Last active', time: `${formatDate(l.lastActive)} (${formatRelative(l.lastActive)})`, active: daysSinceActive(l) <= 3 });
+  }
   return events.map((ev,i) => `
     <div class="timeline-item">
       <div class="timeline-left">
@@ -1838,6 +2151,264 @@ function exportCSV() {
   a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
   a.download = `learners_${new Date().toISOString().split('T')[0]}.csv`;
   a.click();
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ===== UPDATE ACCESS (calls Apps Script) =====
+async function updateAccess(learnerId, email, grant) {
+  // Optimistically update local state
+  const l = APP.learners.find(x => x.id === learnerId);
+  if (l) {
+    l.approved = grant;
+    l.accessStatus = grant ? 'Given' : 'Declined';
+  }
+
+  // Re-render so buttons update instantly
+  applyFilters(); renderAll();
+  // Re-open drawer with updated data
+  if (document.getElementById('side-drawer').classList.contains('open')) {
+    openDrawer(learnerId);
+  }
+
+  showToast(grant ? `✓ Access granted to ${l?.name || email}` : `✕ Access declined for ${l?.name || email}`);
+
+  // If demo mode, just stop here
+  if (APP.isDemo) { showToast('Demo mode — changes not saved to sheet'); return; }
+
+  try {
+    await fetch(SHEETS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'updateAccess',
+        email: email,
+        approved: grant
+      })
+    });
+  } catch(e) {
+    showToast('⚠️ Could not sync to sheet — try refreshing');
+  }
+}
+
+// ===== KPI MODAL =====
+const KPI_CONFIG = {
+  total:       { icon:'👥', title:'All Learners',           subtitle:'Every learner registered on the simulator', filter: l => true },
+  active:      { icon:'⚡', title:'Active This Week',        subtitle:'Learners who have been active in the last 7 days', filter: l => l.approved && l.progress > 0 && daysSinceActive(l) <= 7 && l.progress < 100 },
+  pending:     { icon:'⏳', title:'Pending Access',          subtitle:'Learners waiting for access approval', filter: l => l.accessStatus === 'Pending', showApproveAll: true },
+  declined:    { icon:'🚫', title:'Access Declined',         subtitle:'Learners whose access was declined', filter: l => l.accessStatus === 'Declined' },
+  completed:   { icon:'🏆', title:'Completed Learners',      subtitle:'Learners who have finished all modules at 100%', filter: l => l.progress === 100 },
+  avgProgress: { icon:'📈', title:'Progress Breakdown',      subtitle:'All approved learners sorted by progress', filter: l => l.approved },
+  avgConf:     { icon:'💡', title:'Confidence Scores',       subtitle:'All learners who have submitted a confidence score', filter: l => l.confidence !== null },
+  atRisk:      { icon:'⚠️', title:'At-Risk Learners',        subtitle:'Inactive 7+ days with low progress, or inactive 14+ days', filter: l => getAtRisk(l) },
+};
+
+function openKPIModal(key) {
+  const cfg = KPI_CONFIG[key];
+  if (!cfg) return;
+  const learners = APP.learners.filter(cfg.filter);
+  document.getElementById('kpi-modal-icon').textContent = cfg.icon;
+  document.getElementById('kpi-modal-title').textContent = cfg.title;
+  document.getElementById('kpi-modal-subtitle').textContent = cfg.subtitle;
+  document.getElementById('kpi-modal-footer-note').textContent = `${learners.length} learner${learners.length !== 1 ? 's' : ''}`;
+  const approveAllBtn = document.getElementById('kpi-modal-approve-all');
+  approveAllBtn.style.display = cfg.showApproveAll && learners.length > 0 ? 'block' : 'none';
+  approveAllBtn.dataset.key = key;
+
+  // Sort by progress desc
+  const sorted = [...learners].sort((a,b) => b.progress - a.progress);
+
+  document.getElementById('kpi-modal-body').innerHTML = sorted.length === 0
+    ? `<div style="text-align:center;padding:40px 0;color:var(--text-muted)">No learners in this category</div>`
+    : `<div class="modal-learner-list">${sorted.map(l => {
+        const action = getRecommendedAction(l);
+        const progColor = l.progress === 100 ? '#17B978' : l.progress < 30 ? '#EF4444' : '#5B4BE7';
+        const confText = l.confidence !== null ? `${l.confidence}/10` : '—';
+        return `<div class="modal-learner-row">
+          <div class="modal-learner-avatar" style="background:${COMPANY_COLORS[l.company]||'var(--purple)'}">${initials(l.name)}</div>
+          <div class="modal-learner-info">
+            <div class="modal-learner-name" style="cursor:pointer;color:var(--purple)" onclick="closeKPIModal();setTimeout(()=>openDrawer('${l.id}'),100)">${l.name}</div>
+            <div class="modal-learner-meta">${l.company} · ${l.email} · Last active ${formatRelative(l.lastActive)}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+            <div style="text-align:center;min-width:42px">
+              <div style="font-size:14px;font-weight:800;color:${progColor}">${l.progress}%</div>
+              <div style="font-size:10px;color:var(--text-muted)">Progress</div>
+            </div>
+            <div style="text-align:center;min-width:38px">
+              <div style="font-size:14px;font-weight:800;color:var(--text-muted)">${confText}</div>
+              <div style="font-size:10px;color:var(--text-muted)">Conf.</div>
+            </div>
+            <div class="modal-learner-actions">
+              ${l.accessStatus === 'Pending' ? `
+                <button class="access-btn access-btn-approve" onclick="updateAccessModal('${l.id}','${l.email}',true,this.closest('.modal-learner-row'))">✓ Grant</button>
+                <button class="access-btn access-btn-decline" onclick="updateAccessModal('${l.id}','${l.email}',false,this.closest('.modal-learner-row'))">✕ Decline</button>
+              ` : l.approved ? `
+                <span class="badge badge-green" style="white-space:nowrap">✓ Access Given</span>
+                <button class="access-btn access-btn-revoke" onclick="updateAccessModal('${l.id}','${l.email}',false,this.closest('.modal-learner-row'))">Revoke</button>
+              ` : `
+                <span class="badge badge-red" style="white-space:nowrap">✕ Declined</span>
+                <button class="access-btn access-btn-approve" onclick="updateAccessModal('${l.id}','${l.email}',true,this.closest('.modal-learner-row'))">Re-grant</button>
+              `}
+            </div>
+          </div>
+        </div>`;
+      }).join('')}</div>`;
+
+  document.getElementById('kpi-modal-overlay').classList.add('open');
+}
+
+function closeKPIModal(e) {
+  if (e && e.target !== document.getElementById('kpi-modal-overlay')) return;
+  document.getElementById('kpi-modal-overlay').classList.remove('open');
+}
+
+function updateAccessModal(learnerId, email, grant, rowEl) {
+  // Disable buttons immediately to prevent double-click
+  rowEl.querySelectorAll('.access-btn').forEach(b => b.disabled = true);
+  updateAccess(learnerId, email, grant);
+  // Update the row UI inline
+  const actionsDiv = rowEl.querySelector('.modal-learner-actions');
+  if (actionsDiv) {
+    actionsDiv.innerHTML = grant
+      ? `<span class="badge badge-green">✓ Access Given</span>`
+      : `<span class="badge badge-red">✕ Declined</span>`;
+  }
+}
+
+function approveAllPending() {
+  const pending = APP.learners.filter(l => l.accessStatus === 'Pending');
+  pending.forEach(l => updateAccess(l.id, l.email, true));
+  closeKPIModal({target:null});
+  closeKPIModal();
+  document.getElementById('kpi-modal-overlay').classList.remove('open');
+  showToast(`✓ Granted access to ${pending.length} learner${pending.length !== 1 ? 's' : ''}`);
+}
+
+// ===== COMPANY MODAL =====
+function openCompanyModal(companyName) {
+  const learners = APP.learners.filter(l => l.company === companyName);
+  const color = COMPANY_COLORS[companyName] || '#5B4BE7';
+  const initL = companyName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+
+  const total = learners.length;
+  const approved = learners.filter(l => l.approved).length;
+  const pending = learners.filter(l => l.accessStatus === 'Pending').length;
+  const completed = learners.filter(l => l.progress === 100).length;
+  const atRiskCount = learners.filter(l => getAtRisk(l)).length;
+  const avgProg = total ? Math.round(learners.filter(l=>l.approved).reduce((s,l)=>s+l.progress,0) / (learners.filter(l=>l.approved).length||1)) : 0;
+  const confLearners = learners.filter(l => l.confidence !== null);
+  const avgConf = confLearners.length ? (confLearners.reduce((s,l)=>s+l.confidence,0)/confLearners.length).toFixed(1) : '—';
+  const health = Math.min(100, Math.round(avgProg * 0.5 + (completed/total)*50 - atRiskCount*5));
+  const healthColor = health >= 70 ? '#17B978' : health >= 40 ? '#F59E0B' : '#EF4444';
+
+  document.getElementById('company-modal-icon').textContent = initL;
+  document.getElementById('company-modal-icon').style.background = color;
+  document.getElementById('company-modal-title').textContent = companyName;
+  document.getElementById('company-modal-subtitle').textContent = `${total} learner${total!==1?'s':''} · ${approved} with access · ${completed} completed`;
+
+  document.getElementById('company-modal-body').innerHTML = `
+    <!-- Summary stats -->
+    <div class="modal-stat-row">
+      <div class="modal-stat-card">
+        <div class="modal-stat-val" style="color:${color}">${avgProg}%</div>
+        <div class="modal-stat-lbl">Avg Progress</div>
+      </div>
+      <div class="modal-stat-card">
+        <div class="modal-stat-val" style="color:#17B978">${completed}</div>
+        <div class="modal-stat-lbl">Completed</div>
+      </div>
+      <div class="modal-stat-card">
+        <div class="modal-stat-val" style="color:${avgConf !== '—' ? color : 'var(--text-muted)'}">${avgConf}</div>
+        <div class="modal-stat-lbl">Avg Confidence</div>
+      </div>
+      <div class="modal-stat-card">
+        <div class="modal-stat-val" style="color:${healthColor}">${health}</div>
+        <div class="modal-stat-lbl">Health Score</div>
+      </div>
+    </div>
+    <!-- Health bar -->
+    <div style="margin-bottom:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-muted)">Company Health</span>
+        <span style="font-size:12px;font-weight:700;color:${healthColor}">${health >= 70 ? 'Healthy' : health >= 40 ? 'Needs Attention' : 'At Risk'}</span>
+      </div>
+      <div style="height:8px;background:var(--bg);border-radius:999px;overflow:hidden;border:1px solid var(--border-light)">
+        <div style="height:100%;width:${health}%;background:${healthColor};border-radius:999px;transition:width 0.8s"></div>
+      </div>
+      <div style="display:flex;gap:16px;margin-top:8px;font-size:11px;color:var(--text-muted)">
+        <span>⏳ ${pending} pending access</span>
+        <span>⚠️ ${atRiskCount} at risk</span>
+        <span>🔑 ${approved} with access</span>
+      </div>
+    </div>
+    <!-- Learner table -->
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-muted);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border-light)">Learner Breakdown</div>
+    <div style="overflow-x:auto">
+    <table class="company-modal-table">
+      <thead>
+        <tr>
+          <th>Learner</th>
+          <th>Status</th>
+          <th>Access</th>
+          <th>Progress</th>
+          <th>Confidence</th>
+          <th>Last Active</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${learners.map(l => {
+          const status = getStatus(l);
+          const statusMap = { 'In Progress':'badge-blue','Completed':'badge-green','At Risk':'badge-red','Pending Access':'badge-amber','Declined':'badge-grey' };
+          return `<tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="width:28px;height:28px;border-radius:7px;background:${color};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:white;flex-shrink:0">${initials(l.name)}</div>
+                <div>
+                  <div style="font-size:12px;font-weight:700;color:var(--purple);cursor:pointer" onclick="closeCompanyModal();setTimeout(()=>openDrawer('${l.id}'),100)">${l.name}</div>
+                  <div style="font-size:10px;color:var(--text-muted)">${l.email}</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="badge ${statusMap[status]||'badge-grey'}" style="font-size:10px">${status}</span></td>
+            <td>
+              <div style="display:flex;gap:5px;align-items:center">
+                ${l.accessStatus === 'Pending' ? `
+                  <button class="access-btn access-btn-approve" style="padding:4px 9px;font-size:11px" onclick="updateAccess('${l.id}','${l.email}',true)">✓</button>
+                  <button class="access-btn access-btn-decline" style="padding:4px 9px;font-size:11px" onclick="updateAccess('${l.id}','${l.email}',false)">✕</button>
+                ` : l.approved ? `<span class="badge badge-green" style="font-size:10px">✓ Given</span>` : `<span class="badge badge-red" style="font-size:10px">✕ Declined</span>`}
+              </div>
+            </td>
+            <td>
+              <div style="display:flex;align-items:center;gap:6px">
+                <div style="width:60px;height:5px;background:var(--bg);border-radius:999px;overflow:hidden;border:1px solid var(--border-light)">
+                  <div style="height:100%;width:${l.progress}%;background:${l.progress===100?'#17B978':l.progress<30?'#EF4444':'#5B4BE7'};border-radius:999px"></div>
+                </div>
+                <span style="font-size:11px;font-weight:700">${l.progress}%</span>
+              </div>
+            </td>
+            <td style="font-size:12px;font-weight:700;color:${l.confidence!==null&&l.confidence<4?'#EF4444':l.confidence!==null&&l.confidence>=7?'#17B978':'var(--text-muted)'}">${l.confidence !== null ? l.confidence+'/10' : '—'}</td>
+            <td style="font-size:11px;color:${daysSinceActive(l)>7?'#EF4444':'var(--text-muted)'}">${formatRelative(l.lastActive)}</td>
+            <td><span style="font-size:11px">${getRecommendedAction(l).icon} ${getRecommendedAction(l).label}</span></td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+    </div>
+  `;
+
+  document.getElementById('company-modal-overlay').classList.add('open');
+}
+
+function closeCompanyModal(e) {
+  if (e && e.target !== document.getElementById('company-modal-overlay')) return;
+  document.getElementById('company-modal-overlay').classList.remove('open');
 }
 
 // ===== AUTO-CONNECT ON LOAD =====
