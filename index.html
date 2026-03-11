@@ -760,9 +760,7 @@ td {
   display: flex; align-items: center; justify-content: space-between;
   margin-bottom: 4px;
 }
-.acp-title {
-  font-size: 18px; font-weight: 800; color: white; letter-spacing: -0.3px;
-}
+.acp-title { font-size: 18px; font-weight: 800; color: white; letter-spacing: -0.3px; }
 .acp-close {
   width: 30px; height: 30px; border-radius: 8px;
   background: rgba(255,255,255,0.1); border: none;
@@ -790,7 +788,6 @@ td {
   display: flex; align-items: center; justify-content: center;
   font-size: 34px; font-weight: 800; color: white;
   font-family: 'DM Mono', monospace;
-  letter-spacing: -1px;
   box-shadow: 0 4px 16px rgba(18,21,42,0.18);
 }
 .acp-code-hint {
@@ -810,6 +807,7 @@ td {
   font-size: 12px; color: var(--text);
   line-height: 1.6; margin-bottom: 14px;
   max-height: 120px; overflow-y: auto;
+  white-space: pre-wrap;
 }
 .acp-actions { display: flex; gap: 8px; }
 .acp-btn {
@@ -821,10 +819,7 @@ td {
 }
 .acp-btn-primary { background: var(--purple); color: white; }
 .acp-btn-primary:hover { background: var(--purple-light); box-shadow: 0 4px 16px rgba(91,75,231,0.35); }
-.acp-btn-ghost {
-  background: var(--bg); color: var(--text-muted);
-  border: 1.5px solid var(--border);
-}
+.acp-btn-ghost { background: var(--bg); color: var(--text-muted); border: 1.5px solid var(--border); }
 .acp-btn-ghost:hover { background: white; color: var(--text); }
 .acp-btn-copy-confirm { background: var(--success-bg); color: var(--success); border-color: transparent; }
 
@@ -1490,46 +1485,94 @@ async function connectLive() {
 
 function processLiveData(data) {
   APP.learners = (data.learners || []).map(row => {
-    // Derive confidence: prefer direct value from Learner Summary, fall back to last event
+
+    // ── Field resolvers ───────────────────────────────────────────────────────
+    // Each resolver tries the new header-derived key first, then legacy fallbacks.
+    // Apps Script camelCases headers: "Learner Name" → learnerName, etc.
+    // Special chars are stripped before camelCasing: "Company / Agency" → companyAgency
+    //                                                 "Overall Progress %" → overallProgress
+    //                                                 "access code" → accessCode
+
+    // Col A  — User ID
+    const rawId = row['userId'] || row['User ID'] || row['learnerId'] || row['id'] || '';
+
+    // Col B  — Learner Name
+    const rawName = row['learnerName'] || row['Learner Name'] || row['name'] || '';
+
+    // Col C  — Email (unchanged)
+    const rawEmail = row['email'] || row['Email'] || '';
+
+    // Col D  — Company / Agency  ("/ " stripped → companyAgency)
+    const rawCompany = row['companyAgency'] || row['Company / Agency'] || row['company/Agency'] || row['company'] || row['Company'] || '';
+
+    // Col E  — First Seen  (camelCase unchanged)
+    const rawFirstSeen = row['firstSeen'] || row['First Seen'] || row['timestamp'] || '';
+
+    // Col F  — Last Active  (camelCase unchanged)
+    const rawLastActive = row['lastActive'] || row['Last Active'] || '';
+
+    // Col G  — Overall Progress %  ("%" stripped → overallProgress)
+    const rawProgress = row['overallProgress'] || row['Overall Progress %'] || row['overallProgress%'] || row['progress'] || null;
+
+    // Col H  — Modules Completed  (camelCase unchanged)
+    const rawModsCompleted = row['modulesCompleted'] || row['Modules Completed'] || null;
+
+    // Col I  — Modules Total  (camelCase unchanged)
+    const rawModsTotal = row['modulesTotal'] || row['Modules Total'] || null;
+
+    // Col J  — Confidence Score  ("Score" added → confidenceScore)
+    const rawConfidence = row['confidenceScore'] || row['Confidence Score'] || row['confidence'] || null;
+
+    // Col K  — Status  (new column — informational, not used to drive access logic)
+    // Col L  — Learner Access  (replaces old "approved" boolean → now text TRUE/FALSE/Pending)
+    const rawAccess = row['learnerAccess'] || row['Learner Access'] || row['approved'] || '';
+
+    // Col M  — access code  (camelCase: accessCode)
+    const rawCode = row['accessCode'] || row['access code'] || row['access_code'] || row['Access Code'] || '';
+
+    // ── Derived values ────────────────────────────────────────────────────────
+
+    // Confidence: sheet value takes priority; fall back to last matching event
     const confFromEvents = data.events ? (() => {
-      const evs = (data.events||[]).filter(e => e.email === row.email && e.confidenceScore && e.confidenceScore !== '');
+      const evs = (data.events||[]).filter(e => e.email === rawEmail && e.confidenceScore && e.confidenceScore !== '');
       return evs.length ? parseFloat(evs[evs.length-1].confidenceScore) : null;
     })() : null;
-    const confidence = (row.confidence !== null && row.confidence !== undefined && row.confidence !== '')
-      ? Number(row.confidence) : confFromEvents;
+    const confidence = (rawConfidence !== null && rawConfidence !== undefined && rawConfidence !== '')
+      ? Number(rawConfidence) : confFromEvents;
 
-    // Derive progress: prefer direct value from Learner Summary, fall back to last event
+    // Progress: sheet value takes priority; fall back to last matching event
     const progFromEvents = data.events ? (() => {
-      const evs = (data.events||[]).filter(e => e.email === row.email && e.overallProgressPct !== undefined && e.overallProgressPct !== '');
+      const evs = (data.events||[]).filter(e => e.email === rawEmail && e.overallProgressPct !== undefined && e.overallProgressPct !== '');
       return evs.length ? parseFloat(evs[evs.length-1].overallProgressPct) : 0;
     })() : 0;
-    const progress = (row.progress !== null && row.progress !== undefined) ? Number(row.progress) : progFromEvents;
+    const progress = (rawProgress !== null && rawProgress !== undefined && rawProgress !== '')
+      ? Number(rawProgress) : progFromEvents;
 
-    // Derive modulesCompleted: prefer direct value from Learner Summary, fall back to last event
+    // Modules completed: sheet value takes priority; fall back to last matching event
     const modsFromEvents = data.events ? (() => {
-      const evs = (data.events||[]).filter(e => e.email === row.email && e.modulesCompleted !== undefined && e.modulesCompleted !== '');
+      const evs = (data.events||[]).filter(e => e.email === rawEmail && e.modulesCompleted !== undefined && e.modulesCompleted !== '');
       return evs.length ? parseInt(evs[evs.length-1].modulesCompleted) : 0;
     })() : 0;
-    const modulesCompleted = (row.modulesCompleted !== null && row.modulesCompleted !== undefined) ? Number(row.modulesCompleted) : modsFromEvents;
+    const modulesCompleted = (rawModsCompleted !== null && rawModsCompleted !== undefined && rawModsCompleted !== '')
+      ? Number(rawModsCompleted) : modsFromEvents;
+
+    // Access: "Learner Access" column may hold TRUE/FALSE boolean or text
+    const isApproved = rawAccess === true || String(rawAccess).toUpperCase() === 'TRUE';
 
     return {
-      id: row.learnerId || row.id,
-      name: row.name,
-      email: row.email,
-      company: row.company,
-      firstSeen: row.firstSeen || row.timestamp || '',   // FIX: was row.timestamp only
-      lastActive: row.lastActive,
-      progress: progress || 0,
+      id:               rawId,
+      name:             rawName,
+      email:            rawEmail,
+      company:          rawCompany,
+      firstSeen:        rawFirstSeen,
+      lastActive:       rawLastActive,
+      progress:         progress || 0,
       modulesCompleted: modulesCompleted || 0,
-      modulesTotal: Number(row.modulesTotal) || 5,        // FIX: was hardcoded 5
-      confidence: confidence,
-      accessStatus: (() => {
-        const v = row.approved;
-        if (v === true || String(v).toUpperCase() === 'TRUE') return 'Given';
-        return 'Pending';
-      })(),
-      approved: row.approved === true || String(row.approved).toUpperCase() === 'TRUE',
-      accessCode: row.accessCode || row.access_code || '',
+      modulesTotal:     Number(rawModsTotal) || 5,
+      confidence:       confidence,
+      accessStatus:     isApproved ? 'Given' : 'Pending',
+      approved:         isApproved,
+      accessCode:       rawCode,
     };
   });
   APP.events = data.events || [];
@@ -2277,46 +2320,24 @@ function showToast(msg) {
 
 // ===== UPDATE ACCESS (calls Apps Script) =====
 async function updateAccess(learnerId, email, grant) {
-  // Optimistically update local state
   const l = APP.learners.find(x => x.id === learnerId);
-  if (l) {
-    l.approved = grant;
-    l.accessStatus = grant ? 'Given' : 'Declined';
-  }
-
-  // Re-render so buttons update instantly
+  if (l) { l.approved = grant; l.accessStatus = grant ? 'Given' : 'Declined'; }
   applyFilters(); renderAll();
-  // Re-open drawer with updated data
-  if (document.getElementById('side-drawer').classList.contains('open')) {
-    openDrawer(learnerId);
-  }
-
+  if (document.getElementById('side-drawer').classList.contains('open')) openDrawer(learnerId);
   showToast(grant ? `✓ Access granted to ${l?.name || email}` : `✕ Access declined for ${l?.name || email}`);
-
-  // If demo mode, just stop here
   if (APP.isDemo) { showToast('Demo mode — changes not saved to sheet'); return; }
-
   try {
     const res = await fetch(SHEETS_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({
-        action: 'updateAccess',
-        email: email,
-        approved: grant
-      })
+      body: JSON.stringify({ action: 'updateAccess', email: email, approved: grant })
     });
-    // If granting access, show the code popup after server confirms
     if (grant && l) {
-      try {
-        const data = await res.json();
-        if (data.accessCode) l.accessCode = data.accessCode;
-      } catch(e) { /* response may not be JSON — that's fine, use stored code */ }
+      try { const d = await res.json(); if (d.accessCode) l.accessCode = d.accessCode; } catch(e) {}
       showAccessCodePopup(l);
     }
   } catch(e) {
     showToast('⚠️ Could not sync to sheet — try refreshing');
-    // Still show popup with whatever code we have locally
     if (grant && l) showAccessCodePopup(l);
   }
 }
@@ -2327,25 +2348,15 @@ let _acpData = {};
 function showAccessCodePopup(l) {
   const code = l.accessCode || '';
   _acpData = { learner: l, code };
-
   document.getElementById('acp-learner-name').textContent = l.name;
   document.getElementById('acp-learner-email').textContent = l.email;
-
-  // Render digit boxes
-  const digits = code ? code.toString().padStart(4, '0').split('') : ['?','?','?','?'];
+  const digits = code ? code.toString().padStart(4,'0').split('') : ['?','?','?','?'];
   document.getElementById('acp-code-boxes').innerHTML = digits.map(d =>
-    `<div class="acp-code-digit">${d}</div>`
-  ).join('');
-
-  // Build message
-  const msg = buildAccessMessage(l.name, l.email, code);
-  document.getElementById('acp-message-preview').textContent = msg;
-
-  // Reset copy button
+    `<div class="acp-code-digit">${d}</div>`).join('');
+  document.getElementById('acp-message-preview').textContent = buildAccessMessage(l.name, l.email, code);
   const copyBtn = document.getElementById('acp-copy-btn');
   copyBtn.textContent = '📋 Copy Message';
   copyBtn.className = 'acp-btn acp-btn-ghost';
-
   document.getElementById('access-code-popup-overlay').classList.add('open');
 }
 
@@ -2372,16 +2383,12 @@ function acpCopyMessage() {
     const btn = document.getElementById('acp-copy-btn');
     btn.textContent = '✓ Copied!';
     btn.className = 'acp-btn acp-btn-copy-confirm';
-    setTimeout(() => {
-      btn.textContent = '📋 Copy Message';
-      btn.className = 'acp-btn acp-btn-ghost';
-    }, 2500);
+    setTimeout(() => { btn.textContent = '📋 Copy Message'; btn.className = 'acp-btn acp-btn-ghost'; }, 2500);
   }).catch(() => showToast('⚠️ Could not copy — please copy manually'));
 }
 
 function acpOpenEmail() {
-  const l = _acpData.learner;
-  const code = _acpData.code;
+  const l = _acpData.learner, code = _acpData.code;
   const subject = encodeURIComponent('Your Street Simulator Access');
   const body = encodeURIComponent(buildAccessMessage(l?.name, l?.email, code));
   window.open(`mailto:${l?.email || ''}?subject=${subject}&body=${body}`, '_blank');
@@ -2465,17 +2472,15 @@ function closeKPIModal(e) {
 }
 
 function updateAccessModal(learnerId, email, grant, rowEl) {
-  // Disable buttons immediately to prevent double-click
   rowEl.querySelectorAll('.access-btn').forEach(b => b.disabled = true);
   updateAccess(learnerId, email, grant);
-  // Update the row UI inline
   const actionsDiv = rowEl.querySelector('.modal-learner-actions');
   if (actionsDiv) {
     actionsDiv.innerHTML = grant
       ? `<span class="badge badge-green">✓ Access Given</span>`
       : `<span class="badge badge-red">✕ Declined</span>`;
   }
-  // Note: showAccessCodePopup is called inside updateAccess for grants
+  // showAccessCodePopup fires inside updateAccess for grants
 }
 
 function approveAllPending() {
@@ -2629,13 +2634,13 @@ window.addEventListener('DOMContentLoaded', () => {
     <div class="acp-body">
       <div class="acp-code-label">Their 4-Digit Access Code</div>
       <div class="acp-code-boxes" id="acp-code-boxes"></div>
-      <div class="acp-code-hint">Share this code with the learner — they'll need it to enter the simulator</div>
+      <div class="acp-code-hint">Share this with the learner — they'll need it every time they log in</div>
       <div class="acp-divider"></div>
       <div class="acp-message-label">📨 Ready-to-Send Message</div>
       <div class="acp-message-preview" id="acp-message-preview"></div>
       <div class="acp-actions">
         <button class="acp-btn acp-btn-ghost" id="acp-copy-btn" onclick="acpCopyMessage()">📋 Copy Message</button>
-        <button class="acp-btn acp-btn-primary" id="acp-email-btn" onclick="acpOpenEmail()">✉️ Open in Mail</button>
+        <button class="acp-btn acp-btn-primary" onclick="acpOpenEmail()">✉️ Open in Mail</button>
       </div>
     </div>
   </div>
