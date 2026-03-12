@@ -1408,6 +1408,17 @@ async function connectLive() {
 }
 
 function processLiveData(data) {
+  // Helper: parse a numeric value that may be a % string ("78%"), decimal (0.78), or integer (78)
+  const parseNumeric = (v, isPercent) => {
+    if (v === null || v === undefined || v === '') return null;
+    const s = String(v).replace('%', '').trim();
+    const n = parseFloat(s);
+    if (isNaN(n)) return null;
+    // If stored as a decimal fraction (0–1) and we expect a percentage, multiply by 100
+    if (isPercent && n > 0 && n <= 1) return Math.round(n * 100);
+    return n;
+  };
+
   APP.learners = (data.learners || []).map(row => {
     const rawId        = row['userId']          || row['learnerId']     || row['id']   || '';
     const rawName      = row['learnerName']      || row['name']          || '';
@@ -1424,31 +1435,37 @@ function processLiveData(data) {
 
     const confFromEvents = data.events ? (() => {
       const evs = (data.events||[]).filter(e => e.email === rawEmail && e.confidenceScore && e.confidenceScore !== '');
-      return evs.length ? parseFloat(evs[evs.length-1].confidenceScore) : null;
+      return evs.length ? parseFloat(String(evs[evs.length-1].confidenceScore).replace('%','')) : null;
     })() : null;
-    const confidence = (rawConf !== null && rawConf !== undefined && rawConf !== '') ? Number(rawConf) : confFromEvents;
+    const confParsed = parseNumeric(rawConf, false);
+    const confidence = (confParsed !== null) ? confParsed : confFromEvents;
 
     const progFromEvents = data.events ? (() => {
       const evs = (data.events||[]).filter(e => e.email === rawEmail && e.overallProgressPct !== undefined && e.overallProgressPct !== '');
-      return evs.length ? parseFloat(evs[evs.length-1].overallProgressPct) : 0;
+      return evs.length ? (parseNumeric(evs[evs.length-1].overallProgressPct, true) || 0) : 0;
     })() : 0;
-    const progress = (rawProgress !== null && rawProgress !== undefined && rawProgress !== '') ? Number(rawProgress) : progFromEvents;
+    const progParsed = parseNumeric(rawProgress, true);
+    const progress = (progParsed !== null) ? progParsed : progFromEvents;
 
     const modsFromEvents = data.events ? (() => {
       const evs = (data.events||[]).filter(e => e.email === rawEmail && e.modulesCompleted !== undefined && e.modulesCompleted !== '');
       return evs.length ? parseInt(evs[evs.length-1].modulesCompleted) : 0;
     })() : 0;
-    const modulesCompleted = (rawModsDone !== null && rawModsDone !== undefined && rawModsDone !== '') ? Number(rawModsDone) : modsFromEvents;
+    const modsParsed = parseNumeric(rawModsDone, false);
+    const modulesCompleted = (modsParsed !== null) ? modsParsed : modsFromEvents;
 
-    const isApproved = rawAccess === true || String(rawAccess).toUpperCase() === 'TRUE';
+    // Treat accessStatus as 'Declined' if explicitly declined, otherwise Pending/Given
+    const accessStr = String(rawAccess).toUpperCase().trim();
+    const isApproved = rawAccess === true || accessStr === 'TRUE' || accessStr === 'GIVEN' || accessStr === 'YES' || accessStr === 'APPROVED';
+    const isDeclined = accessStr === 'FALSE' || accessStr === 'DECLINED' || accessStr === 'NO' || accessStr === 'DENIED';
     return {
       id: rawId, name: rawName, email: rawEmail, company: rawCompany,
       firstSeen: rawFirstSeen, lastActive: rawLastActive,
-      progress: isNaN(progress) ? 0 : (progress || 0),
-      modulesCompleted: isNaN(modulesCompleted) ? 0 : (modulesCompleted || 0),
+      progress: (progress !== null && !isNaN(progress)) ? Math.round(Math.min(100, Math.max(0, progress))) : 0,
+      modulesCompleted: (modulesCompleted !== null && !isNaN(modulesCompleted)) ? modulesCompleted : 0,
       modulesTotal: Number(rawModsTotal) || 5,
       confidence: (confidence !== null && !isNaN(confidence)) ? confidence : null,
-      accessStatus: isApproved ? 'Given' : 'Pending',
+      accessStatus: isApproved ? 'Given' : (isDeclined ? 'Declined' : 'Pending'),
       approved: isApproved,
       accessCode: rawCode,
     };
@@ -1690,7 +1707,7 @@ function renderCharts() {
     </div>
     <div class="chart-card">
       <div class="chart-title">Activity Trend</div>
-      <div class="chart-sub">Learners active per day (last 14 days)</div>
+      <div class="chart-sub">Learners active per day — last 14 days</div>
       <div class="line-chart-wrap">${buildLineChart(trendData)}</div>
     </div>
   `;
@@ -1733,39 +1750,57 @@ function buildTrendData(learners) {
 }
 
 function buildLineChart(data) {
-  const w = 260, h = 80, pad = 20;
+  const w = 260, h = 90, pad = 28, padRight = 12;
   const max = Math.max(...data.map(d => d.count), 1);
   const pts = data.map((d,i) => {
-    const x = pad + (i / (data.length-1)) * (w - pad*2);
-    const y = h - pad - (d.count / max) * (h - pad*2);
+    const x = pad + (i / (data.length-1)) * (w - pad - padRight);
+    const y = h - pad - (d.count / max) * (h - pad*1.4);
     return `${x.toFixed(1)},${y.toFixed(1)}`;
   }).join(' ');
   const area = data.map((d,i) => {
-    const x = pad + (i / (data.length-1)) * (w - pad*2);
-    const y = h - pad - (d.count / max) * (h - pad*2);
+    const x = pad + (i / (data.length-1)) * (w - pad - padRight);
+    const y = h - pad - (d.count / max) * (h - pad*1.4);
     return `${x.toFixed(1)},${y.toFixed(1)}`;
   });
-  const areaPath = `M ${area[0]} L ${area.slice(1).join(' L ')} L ${(pad + (data.length-1)/(data.length-1)*(w-pad*2)).toFixed(1)},${h-pad} L ${pad},${h-pad} Z`;
-  // Labels every 3 days
+  const lastX = (pad + (data.length-1)/(data.length-1)*(w-pad-padRight)).toFixed(1);
+  const areaPath = `M ${area[0]} L ${area.slice(1).join(' L ')} L ${lastX},${h-pad} L ${pad},${h-pad} Z`;
+  // Y-axis labels (0, mid, max)
+  const yLabels = [
+    { val: 0,    y: h - pad },
+    { val: Math.round(max/2), y: h - pad - (0.5) * (h - pad*1.4) },
+    { val: max,  y: h - pad - (h - pad*1.4) },
+  ];
+  const yAxisLines = yLabels.map(l =>
+    `<line x1="${pad-2}" y1="${l.y.toFixed(1)}" x2="${w-padRight}" y2="${l.y.toFixed(1)}" stroke="#EEF0F8" stroke-width="1"/>
+     <text x="${(pad-4).toFixed(1)}" y="${(l.y+3).toFixed(1)}" font-family="DM Sans" font-size="8" fill="#9AA0C0" text-anchor="end">${l.val}</text>`
+  ).join('');
+  // X-axis date labels every 3 days
   const labels = data.filter((_,i) => i % 3 === 0).map((d,i) => {
     const realIdx = i * 3;
-    const x = pad + (realIdx / (data.length-1)) * (w - pad*2);
-    return `<text x="${x.toFixed(1)}" y="${h}" font-family="DM Sans" font-size="9" fill="#9AA0C0" text-anchor="middle">${d.day}</text>`;
+    const x = pad + (realIdx / (data.length-1)) * (w - pad - padRight);
+    return `<text x="${x.toFixed(1)}" y="${h+4}" font-family="DM Sans" font-size="8.5" fill="#9AA0C0" text-anchor="middle">${d.day}</text>`;
   }).join('');
-  return `<svg class="line-chart-svg" viewBox="0 0 ${w} ${h+8}" style="overflow:visible">
+  // Dot + count label for each data point
+  const dots = data.map((d,i) => {
+    const x = pad + (i / (data.length-1)) * (w - pad - padRight);
+    const y = h - pad - (d.count / max) * (h - pad*1.4);
+    if (d.count > 0) {
+      return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" fill="#5B4BE7" stroke="white" stroke-width="1.5"/>
+              <text x="${x.toFixed(1)}" y="${(y-7).toFixed(1)}" font-family="DM Sans" font-size="9" font-weight="700" fill="#5B4BE7" text-anchor="middle">${d.count}</text>`;
+    }
+    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2" fill="#D1D5E8"/>`;
+  }).join('');
+  return `<svg class="line-chart-svg" viewBox="0 0 ${w} ${h+12}" style="overflow:visible">
     <defs>
       <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#5B4BE7" stop-opacity="0.15"/>
+        <stop offset="0%" stop-color="#5B4BE7" stop-opacity="0.18"/>
         <stop offset="100%" stop-color="#5B4BE7" stop-opacity="0"/>
       </linearGradient>
     </defs>
+    ${yAxisLines}
     <path d="${areaPath}" fill="url(#lineGrad)"/>
     <polyline points="${pts}" fill="none" stroke="#5B4BE7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    ${data.map((d,i) => {
-      const x = pad + (i / (data.length-1)) * (w - pad*2);
-      const y = h - pad - (d.count / max) * (h - pad*2);
-      return d.count > 0 ? `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="#5B4BE7"/>` : '';
-    }).join('')}
+    ${dots}
     ${labels}
   </svg>`;
 }
