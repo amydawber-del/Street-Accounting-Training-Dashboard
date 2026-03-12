@@ -732,6 +732,68 @@ td {
 }
 .dab-ghost:hover { background: var(--bg); color: var(--text); }
 
+/* ===== RECENT ACTIVITY FEED ===== */
+.activity-filter-row {
+  display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px;
+}
+.activity-filter-btn {
+  padding: 4px 10px; border-radius: 999px;
+  border: 1.5px solid var(--border);
+  background: var(--bg); color: var(--text-muted);
+  font-family: inherit; font-size: 11px; font-weight: 600;
+  cursor: pointer; transition: var(--transition);
+  white-space: nowrap;
+}
+.activity-filter-btn.active, .activity-filter-btn:hover {
+  background: var(--navy); color: white; border-color: var(--navy);
+}
+.activity-feed { display: flex; flex-direction: column; gap: 6px; }
+.activity-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+  transition: border-color 0.15s;
+}
+.activity-item:hover { border-color: #c4c8e0; background: #f7f8fd; }
+.activity-type-pill {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 8px;
+  font-size: 14px; flex-shrink: 0; margin-top: 1px;
+}
+.activity-info { flex: 1; min-width: 0; }
+.activity-title { font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.35; }
+.activity-detail { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.activity-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.activity-score {
+  display: inline-flex; align-items: center;
+  padding: 3px 8px; border-radius: 999px;
+  font-size: 11px; font-weight: 800;
+  white-space: nowrap;
+}
+.score-green  { background: var(--success-bg); color: #059669; }
+.score-amber  { background: var(--warning-bg); color: #B45309; }
+.score-red    { background: var(--danger-bg);  color: #DC2626; }
+.score-blue   { background: var(--info-bg);    color: #1D4ED8; }
+.score-purple { background: var(--purple-glow); color: var(--purple); }
+.score-grey   { background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); }
+.activity-time { font-size: 10px; color: var(--text-light); }
+.activity-show-more {
+  width: 100%; padding: 9px;
+  background: var(--bg); border: 1.5px dashed var(--border);
+  border-radius: var(--radius-sm);
+  font-family: inherit; font-size: 12px; font-weight: 600;
+  color: var(--text-muted); cursor: pointer; transition: var(--transition);
+  margin-top: 2px;
+}
+.activity-show-more:hover { background: white; color: var(--purple); border-color: var(--purple); }
+.activity-empty {
+  padding: 28px 16px; text-align: center;
+  color: var(--text-muted); font-size: 12px;
+}
+.activity-empty-icon { font-size: 28px; display: block; margin-bottom: 8px; }
+
 /* ===== UTILS ===== */
 .hidden { display: none !important; }
 @keyframes fadeUp {
@@ -2062,6 +2124,12 @@ function openDrawer(learnerId) {
       </div>
     </div>
 
+    <!-- Recent Activity -->
+    <div class="drawer-section">
+      <div class="drawer-section-title">Recent Activity</div>
+      ${buildActivityFeed(l)}
+    </div>
+
     <!-- Module Progress -->
     <div class="drawer-section">
       <div class="drawer-section-title">Module Progress</div>
@@ -2160,6 +2228,259 @@ function buildTimeline(l) {
       </div>
     </div>`).join('');
 }
+
+// ===== ACTIVITY FEED =====
+function parseActivity(ev) {
+  const ts = ev.timestamp || ev.date || ev.time || '';
+  const time = ts ? formatActivityTime(ts) : '—';
+  const mod = ev.moduleTitle || ev.module || ev.moduleId || '';
+
+  function scoreColor(pct) {
+    const n = Number(pct);
+    if (isNaN(n)) return 'score-grey';
+    if (n >= 80) return 'score-green';
+    if (n >= 50) return 'score-amber';
+    return 'score-red';
+  }
+  function confColor(n) {
+    if (n >= 7) return 'score-green';
+    if (n >= 4) return 'score-amber';
+    return 'score-red';
+  }
+
+  const rawType = (ev.eventType || ev.type || ev.activityType || '').toLowerCase().replace(/[\s_-]/g,'');
+
+  // Knowledge Check
+  if (rawType.includes('kc') || rawType.includes('knowledgecheck') ||
+      ev.kcScore !== undefined || ev.kcResult !== undefined || ev.kcPass !== undefined) {
+    const score = ev.kcScore !== undefined && ev.kcScore !== '' ? Number(String(ev.kcScore).replace('%','')) : null;
+    const passed = ev.kcPass === true || String(ev.kcPass).toLowerCase() === 'true' || (score !== null && score >= 80);
+    return {
+      type: 'kc', icon: '\uD83E\uDDE0', pillBg: 'rgba(59,130,246,0.12)',
+      title: 'Knowledge Check' + (mod ? ' — ' + mod : ''),
+      detail: passed ? 'Passed' : (score !== null ? 'Did not pass' : 'Attempted'),
+      scoreLabel: score !== null ? score + '%' : (ev.kcResult || null),
+      scoreClass: score !== null ? scoreColor(score) : (passed ? 'score-green' : 'score-red'),
+      time,
+    };
+  }
+
+  // Quiz / Assessment
+  if (rawType.includes('quiz') || rawType.includes('assessment') ||
+      ev.quizScore !== undefined || ev.quizTitle !== undefined) {
+    const score = ev.quizScore !== undefined && ev.quizScore !== '' ? Number(String(ev.quizScore).replace('%','')) : null;
+    return {
+      type: 'quiz', icon: '\uD83D\uDCDD', pillBg: 'rgba(91,75,231,0.12)',
+      title: ev.quizTitle || ('Quiz' + (mod ? ' — ' + mod : '')),
+      detail: score !== null ? 'Scored ' + score + '%' : (ev.quizResult || 'Completed'),
+      scoreLabel: score !== null ? score + '%' : null,
+      scoreClass: score !== null ? scoreColor(score) : 'score-purple',
+      time,
+    };
+  }
+
+  // Scenario
+  if (rawType.includes('scenario') ||
+      ev.scenarioComplete !== undefined || ev.scenarioTitle !== undefined || ev.scenarioScore !== undefined) {
+    const complete = ev.scenarioComplete === true || String(ev.scenarioComplete).toLowerCase() === 'true';
+    const score = ev.scenarioScore !== undefined && ev.scenarioScore !== '' ? Number(String(ev.scenarioScore).replace('%','')) : null;
+    return {
+      type: 'scenario', icon: '\uD83C\uDFAD', pillBg: 'rgba(245,158,11,0.12)',
+      title: ev.scenarioTitle || ('Scenario' + (mod ? ' — ' + mod : '')),
+      detail: complete ? 'Completed' : 'In progress',
+      scoreLabel: score !== null ? score + '%' : (complete ? '\u2713 Done' : null),
+      scoreClass: score !== null ? scoreColor(score) : (complete ? 'score-green' : 'score-amber'),
+      time,
+    };
+  }
+
+  // Help Centre
+  if (rawType.includes('help') || rawType.includes('helpcent') ||
+      ev.helpCentreItem !== undefined || ev.helpCentreTitle !== undefined || ev.helpTicked !== undefined) {
+    const item = ev.helpCentreItem || ev.helpCentreTitle || ev.helpItem || 'Help Centre resource';
+    const ticked = ev.helpTicked === true || String(ev.helpTicked).toLowerCase() === 'true';
+    return {
+      type: 'help', icon: '\uD83D\uDCD6', pillBg: 'rgba(23,185,120,0.1)',
+      title: 'Help Centre: ' + item,
+      detail: ticked ? 'Accessed and ticked off' : 'Resource accessed',
+      scoreLabel: ticked ? '\u2713 Ticked' : null,
+      scoreClass: 'score-green',
+      time,
+    };
+  }
+
+  // Workflow / Task
+  if (rawType.includes('workflow') || rawType.includes('task') ||
+      ev.taskTitle !== undefined || ev.workflowTitle !== undefined || ev.taskComplete !== undefined) {
+    const name = ev.taskTitle || ev.workflowTitle || ev.taskName || 'Task';
+    const done = ev.taskComplete === true || String(ev.taskComplete).toLowerCase() === 'true';
+    return {
+      type: 'task', icon: '\u2705', pillBg: 'rgba(59,130,246,0.1)',
+      title: name + (mod ? ' — ' + mod : ''),
+      detail: done ? 'Completed' : 'Started',
+      scoreLabel: done ? '\u2713 Done' : null,
+      scoreClass: done ? 'score-green' : 'score-blue',
+      time,
+    };
+  }
+
+  // Reflection
+  if (rawType.includes('reflect') ||
+      ev.reflectionText !== undefined || ev.reflection !== undefined ||
+      ev.reflectionsDone !== undefined) {
+    const text = ev.reflectionText || ev.reflection || '';
+    const done = ev.reflectionsDone || 1;
+    return {
+      type: 'reflection', icon: '\uD83D\uDCAD', pillBg: 'rgba(139,92,246,0.1)',
+      title: 'Reflection submitted' + (mod ? ' — ' + mod : ''),
+      detail: text ? (text.slice(0,80) + (text.length > 80 ? '\u2026' : '')) : (done + ' reflection' + (done!==1?'s':'') + ' recorded'),
+      scoreLabel: null,
+      scoreClass: 'score-purple',
+      time,
+    };
+  }
+
+  // Confidence Score
+  if (ev.confidenceScore !== undefined && ev.confidenceScore !== '' && !rawType.includes('progress')) {
+    const conf = Number(ev.confidenceScore);
+    if (!isNaN(conf)) {
+      return {
+        type: 'confidence', icon: '\uD83D\uDCA1', pillBg: 'rgba(245,158,11,0.1)',
+        title: 'Confidence score submitted',
+        detail: conf >= 7 ? 'Strong \u2014 ready to apply skills' : conf >= 4 ? 'Building confidence' : 'Low \u2014 may need follow-up',
+        scoreLabel: conf + '/10',
+        scoreClass: confColor(conf),
+        time,
+      };
+    }
+  }
+
+  // Module / Progress
+  if (rawType.includes('module') || rawType.includes('progress') ||
+      ev.overallProgressPct !== undefined || (ev.modulesCompleted !== undefined && !rawType.includes('kc'))) {
+    const prog = ev.overallProgressPct !== undefined && ev.overallProgressPct !== '' ? Math.round(Number(String(ev.overallProgressPct).replace('%',''))) : null;
+    const mods = ev.modulesCompleted !== undefined && ev.modulesCompleted !== '' ? Number(ev.modulesCompleted) : null;
+    if (prog === null && mods === null && !mod) return null;
+    return {
+      type: 'progress', icon: '\uD83D\uDCC8', pillBg: 'rgba(91,75,231,0.08)',
+      title: mod ? 'Progress update \u2014 ' + mod : 'Overall progress updated',
+      detail: [prog !== null ? 'Overall: ' + prog + '%' : null, mods !== null ? mods + ' module' + (mods!==1?'s':'') + ' completed' : null].filter(Boolean).join(' \u00B7 ') || 'Progress recorded',
+      scoreLabel: prog !== null ? prog + '%' : null,
+      scoreClass: prog !== null ? scoreColor(prog) : 'score-grey',
+      time,
+    };
+  }
+
+  // Generic fallback
+  if (ev.eventType || ev.type || ev.activityType) {
+    return {
+      type: 'other', icon: '\u26A1', pillBg: 'rgba(18,21,42,0.06)',
+      title: ev.eventType || ev.type || ev.activityType,
+      detail: mod || '',
+      scoreLabel: null,
+      scoreClass: 'score-grey',
+      time,
+    };
+  }
+  return null;
+}
+
+function formatActivityTime(ts) {
+  if (!ts) return '\u2014';
+  const d = new Date(ts);
+  if (isNaN(d)) return String(ts).slice(0,10);
+  const now = new Date();
+  const diff = Math.floor((now - d) / 1000);
+  if (diff < 60)      return 'Just now';
+  if (diff < 3600)    return Math.floor(diff/60) + 'm ago';
+  if (diff < 86400)   return Math.floor(diff/3600) + 'h ago';
+  if (diff < 86400*2) return 'Yesterday';
+  return d.toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+}
+
+const ACTIVITY_TYPE_LABELS = {
+  all:        'All',
+  kc:         '\uD83E\uDDE0 KC',
+  quiz:       '\uD83D\uDCDD Quiz',
+  scenario:   '\uD83C\uDFAD Scenario',
+  help:       '\uD83D\uDCD6 Help Centre',
+  task:       '\u2705 Tasks',
+  reflection: '\uD83D\uDCAD Reflections',
+  confidence: '\uD83D\uDCA1 Confidence',
+  progress:   '\uD83D\uDCC8 Progress',
+};
+
+function buildActivityFeed(l) {
+  const rawEvents = (APP.events || [])
+    .filter(e => e.email === l.email || e.userId === l.id || e.learnerId === l.id)
+    .sort((a,b) => new Date(b.timestamp||0) - new Date(a.timestamp||0));
+
+  const activities = rawEvents.map(parseActivity).filter(Boolean);
+
+  if (!activities.length) {
+    return '<div class="activity-empty">' +
+      '<span class="activity-empty-icon">\uD83D\uDCCB</span>' +
+      '<div style="font-weight:600;margin-bottom:4px;color:var(--text)">No activity events yet</div>' +
+      '<div>Activity is logged from your <strong>Raw Events</strong> Google Sheet.<br>KC scores, quiz results, scenarios, tasks and reflections will appear here once recorded.</div>' +
+      '</div>';
+  }
+
+  const typeCounts = {};
+  activities.forEach(a => { typeCounts[a.type] = (typeCounts[a.type]||0) + 1; });
+
+  const filterBtns = ['all', ...Object.keys(typeCounts)].map(t => {
+    const label = ACTIVITY_TYPE_LABELS[t] || t;
+    const count = t === 'all' ? activities.length : typeCounts[t];
+    return '<button class="activity-filter-btn ' + (t==='all'?'active':'') + '" onclick="filterActivityFeed(\'' + l.id + '\',\'' + t + '\',this)">' + label + ' <span style=\"opacity:0.55\">' + count + '</span></button>';
+  }).join('');
+
+  const SHOW_INITIAL = 6;
+  const itemsHtml = activities.map((a, i) => {
+    const hidden = i >= SHOW_INITIAL ? 'display:none' : '';
+    return '<div class="activity-item" data-type="' + a.type + '" style="' + hidden + '" data-idx="' + i + '">' +
+      '<div class="activity-type-pill" style="background:' + a.pillBg + '">' + a.icon + '</div>' +
+      '<div class="activity-info">' +
+        '<div class="activity-title">' + a.title + '</div>' +
+        (a.detail ? '<div class="activity-detail">' + a.detail + '</div>' : '') +
+      '</div>' +
+      '<div class="activity-right">' +
+        (a.scoreLabel ? '<span class="activity-score ' + a.scoreClass + '">' + a.scoreLabel + '</span>' : '') +
+        '<span class="activity-time">' + a.time + '</span>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  const showMore = activities.length > SHOW_INITIAL
+    ? '<button class="activity-show-more" id="act-more-' + l.id + '" onclick="showMoreActivity(\'' + l.id + '\',' + SHOW_INITIAL + ')">Show ' + (activities.length - SHOW_INITIAL) + ' more events \u2193</button>'
+    : '';
+
+  return '<div class="activity-filter-row" id="act-filters-' + l.id + '">' + filterBtns + '</div>' +
+         '<div class="activity-feed" id="act-feed-' + l.id + '">' + itemsHtml + '</div>' + showMore;
+}
+
+function filterActivityFeed(learnerId, type, btn) {
+  document.querySelectorAll('#act-filters-' + learnerId + ' .activity-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const feed = document.getElementById('act-feed-' + learnerId);
+  if (!feed) return;
+  let shown = 0;
+  feed.querySelectorAll('.activity-item').forEach(item => {
+    const match = type === 'all' || item.dataset.type === type;
+    item.style.display = (match && shown < 30) ? '' : 'none';
+    if (match) shown++;
+  });
+  const moreBtn = document.getElementById('act-more-' + learnerId);
+  if (moreBtn) moreBtn.style.display = type === 'all' ? '' : 'none';
+}
+
+function showMoreActivity(learnerId) {
+  const feed = document.getElementById('act-feed-' + learnerId);
+  if (!feed) return;
+  feed.querySelectorAll('.activity-item').forEach(item => { item.style.display = ''; });
+  const btn = document.getElementById('act-more-' + learnerId);
+  if (btn) btn.style.display = 'none';
+}
+
 
 function actionDesc(label, l) {
   const descs = {
