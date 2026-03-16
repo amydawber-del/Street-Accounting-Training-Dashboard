@@ -870,112 +870,6 @@ td {
 .view { display: none; }
 .view.active { display: block; }
 
-/* ===== AI COACHING PANEL ===== */
-.ai-action-panel {
-  background: linear-gradient(135deg, #f8f7ff 0%, #f0eeff 100%);
-  border: 1.5px solid rgba(91,75,231,0.18);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-}
-.ai-action-header {
-  display: flex; align-items: flex-start; gap: 10px;
-  padding: 12px 14px 10px;
-  border-bottom: 1px solid rgba(91,75,231,0.12);
-  background: rgba(91,75,231,0.05);
-}
-.ai-action-badge {
-  display: inline-flex; align-items: center; gap: 5px;
-  background: var(--purple); color: white;
-  border-radius: 999px; padding: 3px 9px;
-  font-size: 10px; font-weight: 700; letter-spacing: 0.3px;
-  flex-shrink: 0; margin-top: 1px;
-}
-.ai-action-title-row { flex: 1; min-width: 0; }
-.ai-action-label { font-size: 13px; font-weight: 700; color: var(--text); }
-.ai-action-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; line-height: 1.5; }
-.ai-regen-btn {
-  background: none; border: 1.5px solid rgba(91,75,231,0.25);
-  border-radius: 6px; color: var(--purple);
-  font-size: 11px; font-weight: 600; font-family: inherit;
-  padding: 5px 10px; cursor: pointer; transition: var(--transition);
-  white-space: nowrap; flex-shrink: 0;
-}
-.ai-regen-btn:hover { background: rgba(91,75,231,0.08); border-color: var(--purple); }
-.ai-regen-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-.ai-action-body { padding: 14px; }
-.ai-loading {
-  display: flex; align-items: center; gap: 10px;
-  padding: 6px 0; color: var(--text-muted); font-size: 12px;
-}
-.ai-loading-dots span {
-  display: inline-block; width: 6px; height: 6px; border-radius: 50%;
-  background: var(--purple); opacity: 0.3;
-  animation: aiDot 1.2s ease-in-out infinite; margin-right: 3px;
-}
-.ai-loading-dots span:nth-child(2) { animation-delay: 0.2s; }
-.ai-loading-dots span:nth-child(3) { animation-delay: 0.4s; }
-@keyframes aiDot {
-  0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
-  40% { opacity: 1; transform: scale(1.1); }
-}
-.ai-context-strip {
-  display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;
-}
-.ai-context-tag {
-  display: inline-flex; align-items: center; gap: 4px;
-  background: white; border: 1px solid rgba(91,75,231,0.2);
-  border-radius: 999px; padding: 3px 9px;
-  font-size: 11px; font-weight: 600; color: var(--purple);
-}
-.ai-questions-list { display: flex; flex-direction: column; gap: 8px; }
-.ai-question-item {
-  background: white; border-radius: 8px;
-  border: 1px solid rgba(91,75,231,0.12);
-  padding: 10px 12px;
-  display: flex; gap: 10px; align-items: flex-start;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  cursor: pointer;
-}
-.ai-question-item:hover { border-color: var(--purple); box-shadow: 0 2px 8px rgba(91,75,231,0.1); }
-.ai-question-num {
-  width: 20px; height: 20px; border-radius: 5px;
-  background: var(--purple-glow); color: var(--purple);
-  font-size: 10px; font-weight: 800;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; margin-top: 1px;
-}
-.ai-question-text { flex: 1; font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.5; }
-.ai-question-copy { font-size: 11px; color: var(--text-light); flex-shrink: 0; margin-top: 1px; opacity: 0; transition: opacity 0.15s; }
-.ai-question-item:hover .ai-question-copy { opacity: 1; }
-.ai-rationale {
-  margin-top: 12px; padding: 10px 12px;
-  background: rgba(91,75,231,0.05); border-radius: 8px;
-  border-left: 3px solid var(--purple);
-  font-size: 11px; color: var(--text-muted); line-height: 1.6;
-}
-.ai-rationale strong { color: var(--text); font-weight: 700; }
-.ai-error { padding: 10px 0; font-size: 12px; color: var(--danger); display: flex; align-items: center; gap: 6px; }
-.ai-copy-confirm { font-size: 11px; color: var(--success); font-weight: 600; }
-/* Email client button row */
-.ai-email-row {
-  display: flex; gap: 8px; margin-top: 12px; padding-top: 12px;
-  border-top: 1px solid rgba(91,75,231,0.1);
-}
-.ai-email-btn {
-  flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 7px;
-  padding: 10px 14px; border-radius: var(--radius-sm);
-  font-family: inherit; font-size: 12px; font-weight: 600;
-  cursor: pointer; border: none; transition: var(--transition);
-  text-decoration: none;
-}
-.ai-email-btn-primary { background: var(--purple); color: white; }
-.ai-email-btn-primary:hover { background: var(--purple-light); box-shadow: 0 4px 14px rgba(91,75,231,0.35); }
-.ai-email-btn-ghost {
-  background: white; color: var(--text-muted);
-  border: 1.5px solid var(--border);
-}
-.ai-email-btn-ghost:hover { background: var(--bg); color: var(--text); border-color: #c4c8e0; }
-
 /* ===== KPI CLICKABLE ===== */
 .kpi-card { cursor: pointer; position: relative; }
 .kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
@@ -1601,11 +1495,18 @@ function processLiveData(data) {
     const rawAccess    = row['learnerAccess']    != null ? row['learnerAccess']    : row['approved']   != null ? row['approved']   : '';
     const rawCode      = row['accessCode']       || row['access_code']  || '';
 
+    const normaliseConf = v => {
+      if (v === null || isNaN(v)) return null;
+      if (v > 10) return parseFloat((v / 10).toFixed(1));
+      if (v > 0 && v <= 1) return parseFloat((v * 10).toFixed(1));
+      return v;
+    };
     const confFromEvents = data.events ? (() => {
       const evs = (data.events||[]).filter(e => e.email === rawEmail && e.confidenceScore && e.confidenceScore !== '');
-      return evs.length ? parseFloat(String(evs[evs.length-1].confidenceScore).replace('%','')) : null;
+      if (!evs.length) return null;
+      return normaliseConf(parseFloat(String(evs[evs.length-1].confidenceScore).replace('%','')));
     })() : null;
-    const confParsed = parseNumeric(rawConf, false);
+    const confParsed = normaliseConf(parseNumeric(rawConf, false));
     const confidence = (confParsed !== null) ? confParsed : confFromEvents;
 
     const progFromEvents = data.events ? (() => {
@@ -1779,7 +1680,7 @@ function renderKPIs(m) {
     { icon:'🚫', val: m.declined,    label:'Access Declined',   cls:'kpi-red',    key:'declined' },
     { icon:'🏆', val: m.completed,   label:'Completed',         cls:'kpi-green',  key:'completed' },
     { icon:'📈', val: m.avgProgress+'%', label:'Avg Progress',  cls:'kpi-blue',   key:'avgProgress' },
-    { icon:'💡', val: m.avgConf+'/10',   label:'Avg Confidence',cls:'kpi-purple', key:'avgConf' },
+    { icon:'💡', val: m.avgConf !== '—' ? m.avgConf+'/10' : '—', label:'Avg Confidence (1–10)', cls: m.avgConf === '—' ? 'kpi-purple' : parseFloat(m.avgConf) >= 7 ? 'kpi-green' : parseFloat(m.avgConf) >= 4 ? 'kpi-amber' : 'kpi-red', key:'avgConf' },
     { icon:'⚠️', val: m.atRisk,      label:'At Risk',           cls:'kpi-red',    key:'atRisk' },
   ];
   document.getElementById('kpi-grid').innerHTML = cards.map(c => `
@@ -2252,22 +2153,15 @@ function openDrawer(learnerId) {
       </div>
     </div>
 
-    <!-- Recommended Action (AI-powered) -->
+    <!-- Recommended Action -->
     <div class="drawer-section">
       <div class="drawer-section-title">Recommended Action</div>
-      <div class="ai-action-panel" id="ai-panel-${l.id}">
-        <div class="ai-action-header">
-          <span class="ai-action-badge">✦ AI</span>
-          <div class="ai-action-title-row">
-            <div class="ai-action-label">${action.icon} ${action.label}</div>
-            <div class="ai-action-sub">${actionDesc(action.label, l)}</div>
-          </div>
-          <button class="ai-regen-btn" id="ai-regen-${l.id}" onclick="generateAICoaching('${l.id}', '${l.email}', '${l.name.replace(/'/g,"\\'")}')">↻ Regenerate</button>
-        </div>
-        <div class="ai-action-body" id="ai-body-${l.id}">
-          <div class="ai-loading">
-            <div class="ai-loading-dots"><span></span><span></span><span></span></div>
-            Generating coaching questions…
+      <div style="background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border);padding:14px 16px;margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:22px">${action.icon}</span>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--text)">${action.label}</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${actionDesc(action.label, l)}</div>
           </div>
         </div>
       </div>
@@ -2296,8 +2190,6 @@ function openDrawer(learnerId) {
   if (saved) document.getElementById('drawer-notes-'+l.id).value = saved;
   document.getElementById('drawer-overlay').classList.add('open');
   document.getElementById('side-drawer').classList.add('open');
-  // Auto-generate AI coaching questions
-  setTimeout(() => generateAICoaching(learnerId, l.email, l.name), 120);
 }
 
 function buildTimeline(l) {
@@ -2610,147 +2502,6 @@ function actionDesc(label, l) {
     'No Action Needed': `${l.name} is progressing well. Keep monitoring.`,
   };
   return descs[label] || '';
-}
-
-// ===== AI COACHING QUESTIONS =====
-async function generateAICoaching(learnerId, email, name) {
-  const l = APP.learners.find(x => x.id === learnerId);
-  if (!l) return;
-
-  const bodyEl   = document.getElementById('ai-body-' + learnerId);
-  const regenBtn = document.getElementById('ai-regen-' + learnerId);
-  if (!bodyEl) return;
-
-  regenBtn.disabled = true;
-  bodyEl.innerHTML = `<div class="ai-loading">
-    <div class="ai-loading-dots"><span></span><span></span><span></span></div>
-    Generating coaching questions…
-  </div>`;
-
-  const action    = getRecommendedAction(l);
-  const daysSince = daysSinceActive(l);
-  const status    = getStatus(l);
-  const atRisk    = getAtRisk(l);
-  const confGap   = getConfidenceGap(l);
-  const firstName = l.name.split(' ')[0];
-
-  const contextLines = [
-    `Learner name: ${l.name} (first name: ${firstName})`,
-    `Company / Agency: ${l.company}`,
-    `Simulator progress: ${l.progress}%`,
-    `Modules completed: ${l.modulesCompleted} of ${l.modulesTotal}`,
-    `Confidence score: ${l.confidence !== null ? l.confidence + '/10' : 'not yet submitted'}`,
-    `Current status: ${status}`,
-    `Access status: ${l.accessStatus}`,
-    `Last active: ${daysSince === 0 ? 'today' : daysSince === 1 ? 'yesterday' : daysSince + ' days ago'}`,
-    `At risk flag: ${atRisk ? 'yes' : 'no'}`,
-    `Confidence gap (high progress, low confidence): ${confGap ? 'yes' : 'no'}`,
-    `Recommended action: ${action.label}`,
-  ].join('\n');
-
-  const prompt = `You are a training coach assistant helping a trainer follow up with a learner on the "Street Simulator" — a practical accountancy training platform for bookkeepers and accountants working in practice.
-
-Here is the learner's current data:
-${contextLines}
-
-Generate EXACTLY 4 specific, warm, practical questions or talking points the trainer should raise when emailing or calling this learner. Each must be:
-- Directly tied to this learner's specific numbers (progress %, confidence, inactivity, modules, etc.)
-- Conversational and supportive — not interrogative or pressurising
-- Covering a mix of: blockers/barriers, understanding/confidence, motivation, and concrete next steps
-- Concise (1–2 sentences max each)
-
-Also generate a short, ready-to-send email subject line and a friendly email body (3–4 short paragraphs) the trainer could send to ${firstName} right now, referencing their specific data. Sign off as "The Street Team".
-
-Respond ONLY in this exact JSON format with no markdown, no extra keys, no preamble:
-{
-  "questions": ["question 1", "question 2", "question 3", "question 4"],
-  "rationale": "One sentence explaining why these questions matter right now.",
-  "emailSubject": "subject line here",
-  "emailBody": "full email body here, use \\n for line breaks"
-}`;
-
-  try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1200,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-
-    if (!resp.ok) throw new Error('API error ' + resp.status);
-    const data  = await resp.json();
-    const raw   = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
-    const clean = raw.replace(/```json[\s\S]*?```/g, m => m.slice(7,-3)).replace(/```/g,'').trim();
-    const parsed = JSON.parse(clean);
-
-    // Context tags
-    const tags = [];
-    if (l.progress > 0) tags.push(`📈 ${l.progress}% done`);
-    if (l.confidence !== null) tags.push(`💡 Conf ${l.confidence}/10`);
-    if (daysSince > 0) tags.push(`⏰ ${daysSince}d inactive`);
-    if (atRisk) tags.push(`⚠️ At risk`);
-    if (confGap) tags.push(`🔍 Conf gap`);
-    if (l.modulesCompleted > 0) tags.push(`📚 ${l.modulesCompleted}/${l.modulesTotal} modules`);
-
-    // Store email data for the open-in-mail button
-    window['_aiEmail_' + learnerId] = { subject: parsed.emailSubject || '', body: parsed.emailBody || '', email: l.email };
-
-    bodyEl.innerHTML = `
-      <div class="ai-context-strip">
-        ${tags.map(t => `<span class="ai-context-tag">${t}</span>`).join('')}
-      </div>
-      <div class="ai-questions-list">
-        ${(parsed.questions || []).map((q, i) => `
-          <div class="ai-question-item" onclick="copyAIQuestion(this, '${learnerId}', ${i})">
-            <div class="ai-question-num">${i + 1}</div>
-            <div class="ai-question-text" id="ai-q-${learnerId}-${i}">${q}</div>
-            <div class="ai-question-copy" id="ai-qcopy-${learnerId}-${i}">📋</div>
-          </div>`).join('')}
-      </div>
-      ${parsed.rationale ? `<div class="ai-rationale"><strong>📌 Why now:</strong> ${parsed.rationale}</div>` : ''}
-      <div class="ai-email-row">
-        <button class="ai-email-btn ai-email-btn-primary" onclick="openAIEmail('${learnerId}')">✉️ Open Draft Email</button>
-        <button class="ai-email-btn ai-email-btn-ghost" onclick="copyAIEmail('${learnerId}', this)">📋 Copy Email</button>
-      </div>
-    `;
-
-  } catch (err) {
-    console.error('AI coaching error:', err);
-    bodyEl.innerHTML = `<div class="ai-error">⚠️ Could not generate suggestions — <button class="ai-regen-btn" style="margin-left:6px" onclick="generateAICoaching('${learnerId}','${l.email}','${l.name.replace(/'/g,"\\'")}')">try again</button></div>`;
-  } finally {
-    regenBtn.disabled = false;
-  }
-}
-
-function copyAIQuestion(itemEl, learnerId, idx) {
-  const textEl = document.getElementById('ai-q-' + learnerId + '-' + idx);
-  const copyEl = document.getElementById('ai-qcopy-' + learnerId + '-' + idx);
-  if (!textEl) return;
-  navigator.clipboard.writeText(textEl.textContent).then(() => {
-    if (copyEl) { copyEl.innerHTML = '<span class="ai-copy-confirm">✓</span>'; setTimeout(() => { copyEl.innerHTML = '📋'; }, 1800); }
-  }).catch(() => {});
-}
-
-function openAIEmail(learnerId) {
-  const d = window['_aiEmail_' + learnerId];
-  if (!d) return;
-  window.open('mailto:' + encodeURIComponent(d.email)
-    + '?subject=' + encodeURIComponent(d.subject)
-    + '&body='    + encodeURIComponent(d.body), '_blank');
-}
-
-function copyAIEmail(learnerId, btn) {
-  const d = window['_aiEmail_' + learnerId];
-  if (!d) return;
-  const full = 'Subject: ' + d.subject + '\n\n' + d.body;
-  navigator.clipboard.writeText(full).then(() => {
-    const orig = btn.textContent;
-    btn.textContent = '✓ Copied!';
-    setTimeout(() => { btn.textContent = orig; }, 2000);
-  }).catch(() => {});
 }
 
 function statusBadge(s) {
